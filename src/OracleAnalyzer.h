@@ -80,7 +80,7 @@ namespace OpenLogReplicator {
         OracleAnalyzer(OutputBuffer *outputBuffer, const char *alias, const char *database, uint64_t trace,
                 uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpData, uint64_t flags, uint64_t disableChecks,
                 uint64_t redoReadSleep, uint64_t archReadSleep, uint64_t memoryMinMb, uint64_t memoryMaxMb,
-                const char *logArchiveFormat);
+                const char *logArchiveFormat, const char *savepointPath);
         virtual ~OracleAnalyzer();
 
         string database;
@@ -89,6 +89,7 @@ namespace OpenLogReplicator {
         string dbRecoveryFileDest;
         string logArchiveFormat;
         string logArchiveDest;
+        string savepointPath;
         Reader *archReader;
         set<Reader*> readers;
         bool waitingForWriter;
@@ -100,7 +101,7 @@ namespace OpenLogReplicator {
         condition_variable writerCond;
         string context;
         typescn scn;
-        volatile typescn startScn;
+        typescn startScn;
         typeseq startSequence;
         string startTime;
         int64_t startTimeRel;
@@ -181,6 +182,7 @@ namespace OpenLogReplicator {
         static void archGetLogPath(OracleAnalyzer *oracleAnalyzer);
         static void archGetLogList(OracleAnalyzer *oracleAnalyzer);
         string applyMapping(string path);
+        void writeSavepoint(typescn savepointScn);
 
         void skipEmptyFields(RedoLogRecord *redoLogRecord, uint64_t &fieldNum, uint64_t &fieldPos, uint16_t &fieldLength);
         void nextField(RedoLogRecord *redoLogRecord, uint64_t &fieldNum, uint64_t &fieldPos, uint16_t &fieldLength);

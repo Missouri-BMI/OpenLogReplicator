@@ -41,7 +41,8 @@ namespace OpenLogReplicator {
 
     OracleAnalyzer::OracleAnalyzer(OutputBuffer *outputBuffer, const char *alias, const char *database, uint64_t trace,
             uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks,
-            uint64_t redoReadSleep, uint64_t archReadSleep, uint64_t memoryMinMb, uint64_t memoryMaxMb, const char *logArchiveFormat) :
+            uint64_t redoReadSleep, uint64_t archReadSleep, uint64_t memoryMinMb, uint64_t memoryMaxMb,
+            const char *logArchiveFormat, const char *savepointPath) :
         Thread(alias),
         sequence(0),
         suppLogDbPrimary(0),
@@ -57,6 +58,7 @@ namespace OpenLogReplicator {
         memoryChunksSupplemental(0),
         database(database),
         logArchiveFormat(logArchiveFormat),
+        savepointPath(savepointPath),
         archReader(nullptr),
         waitingForWriter(false),
         context(""),
@@ -549,6 +551,7 @@ namespace OpenLogReplicator {
                             }
                         }
 
+                        writeSavepoint(redo->nextScn - 1);
                         ++sequence;
                     }
                 }
@@ -615,6 +618,7 @@ namespace OpenLogReplicator {
                         RUNTIME_FAIL("archive log processing returned: " << dec << ret);
                     }
 
+                    writeSavepoint(redo->nextScn - 1);
                     ++sequence;
                     archiveRedoQueue.pop();
                     delete redo;
@@ -928,6 +932,54 @@ namespace OpenLogReplicator {
         }
 
         return path;
+    }
+
+    void OracleAnalyzer::writeSavepoint(typescn savepointScn) {
+        if ((flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
+            return;
+
+        FULL_("savepoint - writing scn: " << dec << savepointScn);
+        string fileName = savepointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
+        ofstream outfile;
+        outfile.open(fileName.c_str(), ios::out | ios::trunc);
+
+        if (!outfile.is_open()) {
+            RUNTIME_FAIL("writing savepoint data to " << fileName);
+        }
+
+        typeseq minSequence = 0xFFFFFFFF;
+        uint64_t minPos = 0;
+        typexid minXid;
+
+        for (auto it : xidTransactionMap) {
+            Transaction *transaction = it.second;
+            if (transaction->firstSequence < minSequence) {
+                minSequence = transaction->firstSequence;
+                minPos = transaction->firstPos;
+                minXid = transaction->xid;
+            } else if (transaction->firstSequence == minSequence && transaction->firstPos < minPos) {
+                minPos = transaction->firstPos;
+                minXid = transaction->xid;
+            }
+        }
+
+        stringstream ss;
+        ss << "{\"database\":\"" << database
+                << "\",\"scn\":" << dec << savepointScn
+                << ",\"resetlogs\":" << dec << resetlogs
+                << ",\"activation\":" << dec << activation;
+
+        if (minSequence != 0xFFFFFFFF) {
+            ss << ",\"min-tran\":{"
+                    << "\"seq\":" << dec << minSequence
+                    << ",\"pos\":" << dec << minPos
+                    << ",\"xid:\":\"" << hex << setfill('0') << setw(16) << minXid << "\"}";
+        }
+
+        ss << "}";
+
+        outfile << ss.rdbuf();
+        outfile.close();
     }
 
     uint8_t *OracleAnalyzer::getMemoryChunk(const char *module, bool supp) {

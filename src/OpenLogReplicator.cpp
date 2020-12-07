@@ -240,18 +240,10 @@ int main(int argc, char **argv) {
                 archReadSleep = archReadSleepJSON.GetUint();
             }
 
-            const Value& readerJSON = getJSONfieldV(configFileName, sourceJSON, "reader");
-
-            //optional
-            uint64_t disableChecks = 0;
-            if (readerJSON.HasMember("disable-checks")) {
-                const Value& disableChecksJSON = readerJSON["disable-checks"];
-                disableChecks = disableChecksJSON.GetUint64();
-            }
-
             const Value& nameJSON = getJSONfieldV(configFileName, sourceJSON, "name");
 
-            //format
+
+            //FORMAT
             const Value& formatJSON = getJSONfieldV(configFileName, sourceJSON, "format");
 
             //optional
@@ -354,11 +346,29 @@ int main(int argc, char **argv) {
             }
             buffers.push_back(outputBuffer);
 
+
+            //READER
+            const Value& readerJSON = getJSONfieldV(configFileName, sourceJSON, "reader");
+
+            //optional
+            uint64_t disableChecks = 0;
+            if (readerJSON.HasMember("disable-checks")) {
+                const Value& disableChecksJSON = readerJSON["disable-checks"];
+                disableChecks = disableChecksJSON.GetUint64();
+            }
+
             //optional
             const char *logArchiveFormat = "o1_mf_%t_%s_%h_.arc";
             if (readerJSON.HasMember("log-archive-format")) {
                 const Value& logArchiveFormatJSON = readerJSON["log-archive-format"];
                 logArchiveFormat = logArchiveFormatJSON.GetString();
+            }
+
+            //optional
+            const char *savepointPath = "savepoint";
+            if (readerJSON.HasMember("savepoint-path")) {
+                const Value& savepointPathJSON = readerJSON["savepoint-path"];
+                savepointPath = savepointPathJSON.GetString();
             }
 
             const Value& readerTypeJSON = getJSONfieldV(configFileName, readerJSON, "type");
@@ -381,9 +391,9 @@ int main(int argc, char **argv) {
                 const Value& serverJSON = getJSONfieldV(configFileName, readerJSON, "server");
                 server = serverJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                        trace, trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep,
-                        archReadSleep, memoryMinMb, memoryMaxMb, logArchiveFormat, user, password, server, isStandby);
+                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
+                        trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, memoryMinMb,
+                        memoryMaxMb, logArchiveFormat, savepointPath, user, password, server, isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -425,9 +435,9 @@ int main(int argc, char **argv) {
 
             } else if (strcmp(readerTypeJSON.GetString(), "offline") == 0) {
 
-                oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                        trace, trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep,
-                        archReadSleep, memoryMinMb, memoryMaxMb, logArchiveFormat);
+                oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace, trace2,
+                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, memoryMinMb, memoryMaxMb,
+                        logArchiveFormat, savepointPath);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -480,10 +490,10 @@ int main(int argc, char **argv) {
                 const Value& serverASMJSON = getJSONfieldV(configFileName, readerJSON, "server-asm");
                 serverASM = serverASMJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                        trace, trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep,
-                        archReadSleep, memoryMinMb, memoryMaxMb, logArchiveFormat,
-                        user, password, server, userASM, passwordASM, serverASM, isStandby);
+                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
+                        trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, memoryMinMb,
+                        memoryMaxMb, logArchiveFormat, savepointPath, user, password, server, userASM, passwordASM, serverASM,
+                        isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -510,9 +520,9 @@ int main(int argc, char **argv) {
             } else if (strcmp(readerTypeJSON.GetString(), "batch") == 0) {
                  flags |= REDO_FLAGS_ARCH_ONLY;
 
-                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                         trace, trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep,
-                         archReadSleep, memoryMinMb, memoryMaxMb, logArchiveFormat);
+                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
+                         trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, memoryMinMb,
+                         memoryMaxMb, logArchiveFormat, savepointPath);
 
                  if (oracleAnalyzer == nullptr) {
                      RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzerBatch) << " bytes memory (for: oracle analyzer)");
@@ -661,7 +671,7 @@ int main(int argc, char **argv) {
             }
 
             //optional
-            uint32_t checkpointInterval = 10;
+            uint64_t checkpointInterval = 10;
             if (writerJSON.HasMember("checkpoint-interval")) {
                 const Value& checkpointIntervalJSON = writerJSON["checkpoint-interval"];
                 checkpointInterval = checkpointIntervalJSON.GetUint64();

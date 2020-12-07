@@ -1,5 +1,5 @@
 {
-  "version": "0.8.0"
+  "version": "0.8.1"
   "dump-redo-log": 0,
   "dump-raw-data": 0,
   "trace": 0,
@@ -29,6 +29,7 @@
       },
       "arch": "online",
       "flags": 0,
+      "savepoint-path": "savepoint",
       "memory-min-mb": 64,
       "memory-max-mb": 1024,
       "redo-read-sleep": 10000,
