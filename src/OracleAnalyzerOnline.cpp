@@ -64,6 +64,7 @@ namespace OpenLogReplicator {
             ",  D.ACTIVATION#"
             ",  VER.BANNER"
             ",  SYS_CONTEXT('USERENV','DB_NAME')"
+            ",  CURRENT_SCN"
             " FROM"
             "   SYS.V_$DATABASE D"
             " JOIN"
@@ -203,7 +204,7 @@ namespace OpenLogReplicator {
             "   SYS.DEFERRED_STG$ DS ON"
             "     T.OBJ# = DS.OBJ#"
             " WHERE"
-            "   BITAND(O.flags, 128) = 0"
+            "   BITAND(O.FLAGS, 128) = 0"
             "   AND U.NAME || '.' || O.NAME LIKE UPPER(:i)"
             " ORDER BY"
             "   4,5");
@@ -300,7 +301,7 @@ namespace OpenLogReplicator {
             "   SYS.TABCOMPART$ TCP ON"
             "     TCP.OBJ# = TSP.POBJ#"
             " WHERE"
-            "   TCP.BO# = :1");
+            "   TCP.BO# = :i");
 
     const char* OracleAnalyzerOnline::SQL_GET_SUPPLEMNTAL_LOG_TABLE(
             "SELECT"
@@ -328,7 +329,23 @@ namespace OpenLogReplicator {
             " FROM"
             "   DATABASE_PROPERTIES"
             " WHERE"
-            "   PROPERTY_NAME = :1");
+            "   PROPERTY_NAME = :i");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_USER(
+            "SELECT"
+            "   U.USER#, U.NAME, U.SPARE1"
+            " FROM"
+            "   SYS.USER$ AS OF SCN :i U"
+            " WHERE"
+            "   U.NAME LIKE UPPER(:j)");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_OBJ(
+            "SELECT"
+            "   O.OBJ#, O.DATAOBJ#, O.NAME, O.FLAGS"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " WHERE"
+            "   O.OWNER# = :j");
 
     OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database,
             uint64_t trace, uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks,
@@ -364,23 +381,9 @@ namespace OpenLogReplicator {
 
         typeresetlogs currentResetlogs;
         typeactivation currentActivation;
+        typescn currentScn;
 
         if ((disableChecks & DISABLE_CHECK_GRANTS) == 0) {
-            checkTableForGrants("SYS.CCOL$");
-            checkTableForGrants("SYS.CDEF$");
-            checkTableForGrants("SYS.COL$");
-            checkTableForGrants("SYS.CON$");
-            checkTableForGrants("SYS.DEFERRED_STG$");
-            checkTableForGrants("SYS.ECOL$");
-            checkTableForGrants("SYS.ICOL$");
-            checkTableForGrants("SYS.IND$");
-            checkTableForGrants("SYS.OBJ$");
-            checkTableForGrants("SYS.SEG$");
-            checkTableForGrants("SYS.TAB$");
-            checkTableForGrants("SYS.TABCOMPART$");
-            checkTableForGrants("SYS.TABPART$");
-            checkTableForGrants("SYS.TABSUBPART$");
-            checkTableForGrants("SYS.USER$");
             checkTableForGrants("SYS.V_$ARCHIVED_LOG");
             checkTableForGrants("SYS.V_$DATABASE");
             checkTableForGrants("SYS.V_$DATABASE_INCARNATION");
@@ -404,6 +407,7 @@ namespace OpenLogReplicator {
             stmt.defineUInt32(7, currentActivation);
             char bannerStr[81]; stmt.defineString(8, bannerStr, sizeof(bannerStr));
             char contextStr[81]; stmt.defineString(9, contextStr, sizeof(contextStr));
+            stmt.defineUInt64(10, currentScn);
 
             if (stmt.executeQuery()) {
                 if (logMode == 0) {
@@ -455,6 +459,24 @@ namespace OpenLogReplicator {
             } else {
                 RUNTIME_FAIL("trying to read SYS.V_$DATABASE");
             }
+        }
+
+        if ((disableChecks & DISABLE_CHECK_GRANTS) == 0) {
+            checkTableForGrantsFlashback("SYS.CCOL$", currentScn);
+            checkTableForGrantsFlashback("SYS.CDEF$", currentScn);
+            checkTableForGrantsFlashback("SYS.COL$", currentScn);
+            checkTableForGrantsFlashback("SYS.CON$", currentScn);
+            checkTableForGrantsFlashback("SYS.DEFERRED_STG$", currentScn);
+            checkTableForGrantsFlashback("SYS.ECOL$", currentScn);
+            checkTableForGrantsFlashback("SYS.ICOL$", currentScn);
+            checkTableForGrantsFlashback("SYS.IND$", currentScn);
+            checkTableForGrantsFlashback("SYS.OBJ$", currentScn);
+            checkTableForGrantsFlashback("SYS.SEG$", currentScn);
+            checkTableForGrantsFlashback("SYS.TAB$", currentScn);
+            checkTableForGrantsFlashback("SYS.TABCOMPART$", currentScn);
+            checkTableForGrantsFlashback("SYS.TABPART$", currentScn);
+            checkTableForGrantsFlashback("SYS.TABSUBPART$", currentScn);
+            checkTableForGrantsFlashback("SYS.USER$", currentScn);
         }
 
         dbRecoveryFileDest = getParameterValue("db_recovery_file_dest");
@@ -688,13 +710,104 @@ namespace OpenLogReplicator {
         }
     }
 
+    void OracleAnalyzerOnline::checkTableForGrantsFlashback(string tableName, typescn scn) {
+        try {
+            string query("SELECT 1 FROM " + tableName + " AS OF SCN " + to_string(scn) + " WHERE 0 = 1");
+
+            DatabaseStatement stmt(conn);
+            TRACE_(TRACE2_SQL, query);
+            stmt.createStatement(query.c_str());
+            uint64_t dummy; stmt.defineUInt64(1, dummy);
+            stmt.executeQuery();
+        } catch (RuntimeException &ex) {
+            if (conId > 0) {
+                RUNTIME_FAIL("grants missing" << endl <<
+                        "HINT run: ALTER SESSION SET CONTAINER = " << conName << ";" << endl <<
+                        "HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+            } else {
+                RUNTIME_FAIL("grants missing" << endl << "HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+            }
+            throw RuntimeException (ex.msg);
+        }
+    }
+
     void OracleAnalyzerOnline::refreshSchema(void) {
         for (SchemaElement *element : schema->elements)
             addTable(element->mask, element->keys, element->keysStr, element->options);
     }
 
+    void OracleAnalyzerOnline::addSchema(string schemaMask) {
+        INFO_("- reading schema: " << schemaMask);
+
+        try {
+            DatabaseStatement stmtUser(conn), stmtObj(conn);
+
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_USER << endl <<
+                    "PARAM1: " << scn <<
+                    "PARAM2: " << schemaMask);
+            stmtUser.createStatement(SQL_GET_SYS_USER);
+            stmtUser.bindUInt64(1, scn);
+            stmtUser.bindString(2, schemaMask);
+            uint64_t user; stmtUser.defineUInt64(1, user);
+            char userName[129]; stmtUser.defineString(2, userName, sizeof(userName));
+            uint64_t spare1; stmtUser.defineUInt64(3, spare1);
+
+            int64_t retUser = stmtUser.executeQuery();
+            while (retUser) {
+                if (schema->sysUserMap[user] != nullptr) {
+                    retUser = stmtUser.next();
+                    continue;
+                }
+
+                SysUser *sysUser = new SysUser();
+                sysUser->user = user;
+                sysUser->name = userName;
+                sysUser->spare1 = spare1;
+                schema->sysUserMap[user] = sysUser;
+
+                cerr << "user: " << dec << user << endl;
+                TRACE_(TRACE2_SQL, SQL_GET_SYS_OBJ << endl <<
+                        "PARAM1: " << scn <<
+                        "PARAM2: " << user);
+                stmtObj.createStatement(SQL_GET_SYS_OBJ);
+                stmtObj.bindUInt64(1, scn);
+                stmtObj.bindUInt64(2, user);
+
+                uint32_t objn; stmtObj.defineUInt32(1, objn);
+                uint32_t objd; stmtObj.defineUInt32(2, objd);
+                char objName[129]; stmtObj.defineString(3, objName, sizeof(objName));
+                uint64_t flags; stmtObj.defineUInt64(4, flags);
+
+                int64_t retObj = stmtObj.executeQuery();
+                uint64_t vals = 0;
+                while (retObj) {
+                    SysObj *sysObj = new SysObj();
+                    sysObj->objn = objn;
+                    sysObj->objd = objd;
+                    sysObj->name = objName;
+                    sysObj->flags = flags;
+                    schema->sysObjMap[objn] = sysObj;
+
+                    ++vals;
+                    retObj = stmtObj.next();
+                }
+
+                cerr << "user: " << userName << ": " << dec << vals << endl;
+                retUser = stmtUser.next();
+            }
+        } catch (RuntimeException &ex) {
+            RUNTIME_FAIL("Error reading SYS.OBJ$ from flashback, try some later SCN for start");
+        }
+    }
+
     void OracleAnalyzerOnline::addTable(string &mask, vector<string> &keys, string &keysStr, uint64_t options) {
+        string::size_type pos = mask.find('.');
+        if (pos == string::npos) {
+            RUNTIME_FAIL("mask " << mask << " is missing \".\" character");
+        }
+        addSchema(mask.substr(0, pos));
         INFO_("- reading table schema for: " << mask);
+
         uint64_t tabCnt = 0;
         DatabaseStatement stmt(conn), stmtCol(conn), stmtPart(conn), stmtSupp(conn);
 

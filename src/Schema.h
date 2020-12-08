@@ -32,6 +32,20 @@ namespace OpenLogReplicator {
     class OracleObject;
     class SchemaElement;
 
+    struct SysObj {
+        uint32_t objn;
+        uint32_t objd;
+        uint32_t owner;
+        string name;
+        uint64_t flags;
+    };
+
+    struct SysUser {
+        uint64_t user;
+        string name;
+        uint64_t spare1;
+    };
+
     class Schema {
     protected:
         stringstream& writeEscapeValue(stringstream &ss, string &str);
@@ -41,6 +55,8 @@ namespace OpenLogReplicator {
     public:
         OracleObject *object;
         vector<SchemaElement*> elements;
+        unordered_map<typeuser, SysUser*> sysUserMap;
+        unordered_map<typeobj, SysObj*> sysObjMap;
 
         Schema();
         virtual ~Schema();

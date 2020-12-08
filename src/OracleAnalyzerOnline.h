@@ -49,6 +49,8 @@ namespace OpenLogReplicator {
         static const char* SQL_GET_SUPPLEMNTAL_LOG_TABLE;
         static const char* SQL_GET_PARAMETER;
         static const char* SQL_GET_PROPERTY;
+        static const char* SQL_GET_SYS_USER;
+        static const char* SQL_GET_SYS_OBJ;
 
         bool isStandby;
         string user;
@@ -62,8 +64,10 @@ namespace OpenLogReplicator {
         string getParameterValue(const char *parameter);
         string getPropertyValue(const char *property);
         void checkTableForGrants(string tableName);
+        void checkTableForGrantsFlashback(string tableName, typescn scn);
         virtual const char* getModeName(void);
         virtual void refreshSchema(void);
+        void addSchema(string schemaMask);
         void addTable(string &mask, vector<string> &keys, string &keysStr, uint64_t options);
 
     public:

@@ -54,6 +54,18 @@ namespace OpenLogReplicator {
         }
         objectMap.clear();
 
+        for (auto it : sysObjMap) {
+            SysObj *sysObjTmp = it.second;
+            delete sysObjTmp;
+        }
+        sysObjMap.clear();
+
+        for (auto it : sysUserMap) {
+            SysUser *sysUserTmp = it.second;
+            delete sysUserTmp;
+        }
+        sysUserMap.clear();
+
         for (SchemaElement *element : elements) {
             delete element;
         }

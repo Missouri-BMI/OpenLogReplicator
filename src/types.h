@@ -51,6 +51,7 @@ typedef uint32_t typeusnslt;
 typedef uint64_t typescn;
 typedef uint16_t typesubscn;
 typedef uint32_t typeseq;
+typedef uint64_t typeuser;
 
 typedef uint16_t typeunicode16;
 typedef uint32_t typeunicode32;
