@@ -51,6 +51,8 @@ namespace OpenLogReplicator {
         static const char* SQL_GET_PROPERTY;
         static const char* SQL_GET_SYS_USER;
         static const char* SQL_GET_SYS_OBJ;
+        static const char* SQL_GET_SYS_COL;
+        static const char* SQL_GET_SYS_CCOL;
 
         bool isStandby;
         string user;

@@ -347,6 +347,29 @@ namespace OpenLogReplicator {
             " WHERE"
             "   O.OWNER# = :j");
 
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_COL(
+            "SELECT"
+            "   C.COL#, C.SEGCOL#, C.INTCOL#, C.NAME, C.TYPE#, C.LENGTH, C.PRECISION#, C.SCALE, C.CHARSETFORM, C.CHARSETID, C.NULL$,"
+            "   MOD(C.PROPERTY, 18446744073709551616), C.PROPERTY / 18446744073709551616"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.COL$ AS OF SCN :j C ON"
+            "     O.OBJ# = C.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_CCOL(
+            "SELECT"
+            "   L.CON#, L.INTCOL#, L.OBJ#, L.SPARE1"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.CCOL$ AS OF SCN :j L ON"
+            "     O.OBJ# = L.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
     OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database,
             uint64_t trace, uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks,
             uint64_t redoReadSleep, uint64_t archReadSleep, uint64_t memoryMinMb, uint64_t memoryMaxMb,
@@ -740,63 +763,154 @@ namespace OpenLogReplicator {
         INFO_("- reading schema: " << schemaMask);
 
         try {
-            DatabaseStatement stmtUser(conn), stmtObj(conn);
+            DatabaseStatement stmtUser(conn), stmtObj(conn), stmtCol(conn), stmtCCol(conn);
 
+            //reading SYS.USER$
             TRACE_(TRACE2_SQL, SQL_GET_SYS_USER << endl <<
                     "PARAM1: " << scn <<
                     "PARAM2: " << schemaMask);
             stmtUser.createStatement(SQL_GET_SYS_USER);
             stmtUser.bindUInt64(1, scn);
             stmtUser.bindString(2, schemaMask);
-            uint64_t user; stmtUser.defineUInt64(1, user);
+            uint64_t userUser; stmtUser.defineUInt64(1, userUser);
             char userName[129]; stmtUser.defineString(2, userName, sizeof(userName));
-            uint64_t spare1; stmtUser.defineUInt64(3, spare1);
+            uint64_t userSpare1; stmtUser.defineUInt64(3, userSpare1);
 
             int64_t retUser = stmtUser.executeQuery();
             while (retUser) {
-                if (schema->sysUserMap[user] != nullptr) {
+                if (schema->sysUserMap[userUser] != nullptr) {
                     retUser = stmtUser.next();
                     continue;
                 }
 
                 SysUser *sysUser = new SysUser();
-                sysUser->user = user;
+                sysUser->scn = scn;
+                sysUser->user = userUser;
                 sysUser->name = userName;
-                sysUser->spare1 = spare1;
-                schema->sysUserMap[user] = sysUser;
+                sysUser->spare1 = userSpare1;
+                sysUser->prev = nullptr;
+                sysUser->deleted = false;
+                schema->sysUserMap[userUser] = sysUser;
 
-                cerr << "user: " << dec << user << endl;
+                //reading SYS.OBJ$
                 TRACE_(TRACE2_SQL, SQL_GET_SYS_OBJ << endl <<
                         "PARAM1: " << scn <<
                         "PARAM2: " << user);
                 stmtObj.createStatement(SQL_GET_SYS_OBJ);
                 stmtObj.bindUInt64(1, scn);
-                stmtObj.bindUInt64(2, user);
+                stmtObj.bindUInt64(2, userUser);
 
-                uint32_t objn; stmtObj.defineUInt32(1, objn);
-                uint32_t objd; stmtObj.defineUInt32(2, objd);
+                typeobj objObjn; stmtObj.defineUInt32(1, objObjn);
+                typeobj objObjd; stmtObj.defineUInt32(2, objObjd);
                 char objName[129]; stmtObj.defineString(3, objName, sizeof(objName));
-                uint64_t flags; stmtObj.defineUInt64(4, flags);
+                uint64_t objFlags; stmtObj.defineUInt64(4, objFlags);
 
-                int64_t retObj = stmtObj.executeQuery();
-                uint64_t vals = 0;
-                while (retObj) {
+                int64_t objRet = stmtObj.executeQuery();
+                uint64_t objVals = 0;
+                while (objRet) {
                     SysObj *sysObj = new SysObj();
-                    sysObj->objn = objn;
-                    sysObj->objd = objd;
+                    sysObj->scn = scn;
+                    sysObj->objn = objObjn;
+                    sysObj->objd = objObjd;
                     sysObj->name = objName;
-                    sysObj->flags = flags;
-                    schema->sysObjMap[objn] = sysObj;
+                    sysObj->flags = objFlags;
+                    sysObj->prev = nullptr;
+                    sysObj->deleted = false;
+                    schema->sysObjMap[objObjn] = sysObj;
 
-                    ++vals;
-                    retObj = stmtObj.next();
+                    ++objVals;
+                    objRet = stmtObj.next();
                 }
 
-                cerr << "user: " << userName << ": " << dec << vals << endl;
+                //reading SYS.COL$
+                TRACE_(TRACE2_SQL, SQL_GET_SYS_COL << endl <<
+                        "PARAM1: " << scn <<
+                        "PARAM2: " << scn <<
+                        "PARAM3: " << user);
+                stmtCol.createStatement(SQL_GET_SYS_COL);
+                stmtCol.bindUInt64(1, scn);
+                stmtCol.bindUInt64(2, scn);
+                stmtCol.bindUInt64(3, userUser);
+
+                typecol colCol; stmtCol.defineInt64(1, colCol);
+                typecol colSegCol; stmtCol.defineInt64(2, colSegCol);
+                typecol colIntCol; stmtCol.defineInt64(3, colIntCol);
+                char colName[129]; stmtCol.defineString(4, colName, sizeof(colName));
+                uint64_t colType; stmtCol.defineUInt64(5, colType);
+                uint64_t colLength; stmtCol.defineUInt64(6, colLength);
+                int64_t colPrecision; stmtCol.defineInt64(7, colPrecision);
+                int64_t colScale; stmtCol.defineInt64(8, colScale);
+                uint64_t colCharsetForm; stmtCol.defineUInt64(9, colCharsetForm);
+                uint64_t colCharsetId; stmtCol.defineUInt64(10, colCharsetId);
+                int64_t colNull; stmtCol.defineInt64(11, colNull);
+                uint64_t colProperty1; stmtCol.defineUInt64(12, colProperty1);
+                uint64_t colProperty2; stmtCol.defineUInt64(13, colProperty2);
+
+                int64_t colRet = stmtCol.executeQuery();
+                uint64_t colVals = 0;
+                while (colRet) {
+                    SysCol *sysCol = new SysCol();
+                    sysCol->scn = scn;
+                    sysCol->col = colCol;
+                    sysCol->segCol = colSegCol;
+                    sysCol->intCol = colIntCol;
+                    sysCol->name = colName;
+                    sysCol->type = colType;
+                    sysCol->length = colLength;
+                    sysCol->precision = colPrecision;
+                    sysCol->scale = colScale;
+                    sysCol->charsetForm = colCharsetForm;
+                    sysCol->charsetId = colCharsetId;
+                    sysCol->null = colNull;
+                    sysCol->property.set(colProperty1, colProperty2);
+                    sysCol->prev = nullptr;
+                    sysCol->deleted = false;
+                    schema->sysColMap[colCol] = sysCol;
+
+                    ++colVals;
+                    colRet = stmtCol.next();
+                }
+
+                //reading SYS.CCOL$
+                TRACE_(TRACE2_SQL, SQL_GET_SYS_CCOL << endl <<
+                        "PARAM1: " << scn <<
+                        "PARAM2: " << scn <<
+                        "PARAM3: " << user);
+                stmtCCol.createStatement(SQL_GET_SYS_CCOL);
+                stmtCCol.bindUInt64(1, scn);
+                stmtCCol.bindUInt64(2, scn);
+                stmtCCol.bindUInt64(3, userUser);
+
+                typecol ccolCon; stmtCCol.defineInt64(1, ccolCon);
+                typecol ccolIntCol; stmtCCol.defineInt64(2, ccolIntCol);
+                typeobj ccolObjn; stmtCCol.defineUInt32(3, ccolObjn);
+                uint64_t ccolSpare1; stmtCCol.defineUInt64(3, ccolSpare1);
+
+                int64_t ccolRet = stmtCCol.executeQuery();
+                uint64_t ccolVals = 0;
+                while (ccolRet) {
+                    SysCCol *sysCCol = new SysCCol();
+                    sysCCol->scn = scn;
+                    sysCCol->con = ccolCon;
+                    sysCCol->intCol = ccolIntCol;
+                    sysCCol->objn = ccolObjn;
+                    sysCCol->spare1 = ccolSpare1;
+                    sysCCol->prev = nullptr;
+                    sysCCol->deleted = false;
+                    //wrong: schema->sysCColMap[ccolCon] = sysCCol;
+
+                    ++ccolVals;
+                    ccolRet = stmtCCol.next();
+                }
+
+                INFO_("- reading full schema for user " << userName <<
+                        ": (obj:" << dec << objVals <<
+                        ", col:" << dec << colVals <<
+                        ", ccol: " << dec << ccolVals << ")");
                 retUser = stmtUser.next();
             }
         } catch (RuntimeException &ex) {
-            RUNTIME_FAIL("Error reading SYS.OBJ$ from flashback, try some later SCN for start");
+            RUNTIME_FAIL("Error reading schema from flashback, try some later SCN for start");
         }
     }
 

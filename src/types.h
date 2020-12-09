@@ -35,7 +35,7 @@ typedef uint32_t typeresetlogs;
 typedef uint32_t typeactivation;
 typedef uint16_t typeop1;
 typedef uint32_t typeop2;
-typedef uint16_t typecon;
+typedef uint16_t typeconid;
 typedef uint32_t typeblk;
 typedef uint32_t typedba;
 typedef uint16_t typeslot;
@@ -190,12 +190,24 @@ typedef uint64_t typeunicode;
 #define INFO_(x)                                {if (trace >= TRACE_INFO){stringstream s; s << "INFO: " << x << endl; cerr << s.str();} }
 #define FULL_(x)                                {if (trace >= TRACE_FULL){stringstream s; s << "FULL: " << x << endl; cerr << s.str();} }
 #define TRACE_(t,x)                             {if ((trace2 & (t)) != 0) {stringstream s; s << "TRACE: " << x << endl; cerr << s.str();} }
+#define TYPEINTXLEN                             4
 
 using namespace std;
 
 namespace OpenLogReplicator {
 
     class OracleAnalyzer;
+
+    class uintX_t {
+    private:
+        uint64_t data[TYPEINTXLEN];
+    public:
+        uintX_t& operator+=(const uintX_t &val);
+        uintX_t& operator=(const uintX_t &val);
+        uintX_t& operator=(uint64_t val);
+        uintX_t& operator=(const char *val);
+        uintX_t& set(uint64_t val1, uint64_t val2);
+    };
 
     class typetime {
         uint32_t val;

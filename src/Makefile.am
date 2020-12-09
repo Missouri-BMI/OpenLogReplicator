@@ -73,7 +73,8 @@ Thread.cpp \
 TransactionBuffer.cpp \
 Transaction.cpp \
 Writer.cpp \
-WriterFile.cpp
+WriterFile.cpp \
+uintX_t.cpp
 
 if OCI_COMPILE
 OpenLogReplicator_SOURCES += DatabaseConnection.cpp \

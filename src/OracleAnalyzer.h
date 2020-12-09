@@ -122,7 +122,7 @@ namespace OpenLogReplicator {
         uint64_t trace;
         uint64_t trace2;
         uint64_t version;                   //compatibility level of redo logs
-        typecon conId;
+        typeconid conId;
         string conName;
         string lastCheckedDay;
         typeresetlogs resetlogs;

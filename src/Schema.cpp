@@ -35,7 +35,6 @@ extern const Value& getJSONfieldV(string &fileName, const Value& value, const ch
 extern const Value& getJSONfieldD(string &fileName, const Document& document, const char* field);
 
 namespace OpenLogReplicator {
-
     Schema::Schema() :
             object(nullptr) {
     }
