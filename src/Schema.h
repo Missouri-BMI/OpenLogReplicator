@@ -32,31 +32,27 @@ namespace OpenLogReplicator {
     class OracleObject;
     class SchemaElement;
 
-    struct SysUser {
-        typescn scn;
-        uint64_t user;
-        string name;
+    struct SysCCol {
+        string rowid;
+        typecol con;        //pk
+        typecol intCol;     //pk
+        uint64_t objn;
         uint64_t spare1;
-        SysUser *prev;
-        bool deleted;
     };
 
-    struct SysObj {
-        typescn scn;
-        uint32_t objn;
-        uint32_t objd;
-        uint32_t owner;
-        string name;
-        uint32_t flags;
-        SysObj *prev;
-        bool deleted;
+    struct SysCDef {
+        string rowid;
+        typecol con;        //pk
+        typeobj objn;
+        uint64_t type;
     };
 
     struct SysCol {
-        typescn scn;
+        string rowid;
+        typeobj objn;       //pk
         typecol col;
         typecol segCol;
-        typecol intCol;
+        typecol intCol;     //pk
         string name;
         uint64_t type;
         uint64_t length;
@@ -66,18 +62,42 @@ namespace OpenLogReplicator {
         uint64_t charsetId;
         int64_t null;
         uintX_t property;
-        SysCol *prev;
-        bool deleted;
     };
 
-    struct SysCCol {
-        typescn scn;
-        typecol con;
-        typecol intCol;
-        uint64_t objn;
+    struct SysECol {
+        string rowid;
+        typeobj objn;
+        uint32_t colNum;
+        uint32_t guardId;
+    };
+
+    struct SysObj {
+        string rowid;
+        typeobj objn;       //pk
+        typeobj objd;
+        uint32_t owner;
+        uint64_t type;
+        string name;
+        uint32_t flags;
+    };
+
+    struct SysUser {
+        string rowid;
+        uint64_t user;      //pk
+        string name;
         uint64_t spare1;
-        SysCCol *prev;
-        bool deleted;
+    };
+
+    struct SysTab {
+        string rowid;
+        typeobj objn;       //pk
+        typeobj objd;
+        uint32_t ts;
+        uint32_t file;
+        uint32_t block;
+        uint64_t cluCols;
+        uint64_t flags;
+        uintX_t property;
     };
 
     class Schema {
@@ -89,10 +109,12 @@ namespace OpenLogReplicator {
     public:
         OracleObject *object;
         vector<SchemaElement*> elements;
-        unordered_map<typeuser, SysUser*> sysUserMap;
+        unordered_map<uint64_t, SysCCol*> sysCColMap;
+        unordered_map<typecol, SysCDef*> sysCDefMap;
+        unordered_map<uint64_t, SysCol*> sysColMap;
         unordered_map<typeobj, SysObj*> sysObjMap;
-        unordered_map<typecol, SysCol*> sysColMap;
-        unordered_map<typecol, SysCCol*> sysCColMap;
+        unordered_map<typeuser, SysUser*> sysUserMap;
+        unordered_map<uint64_t, SysECol*> sysEColMap;
 
         Schema();
         virtual ~Schema();
