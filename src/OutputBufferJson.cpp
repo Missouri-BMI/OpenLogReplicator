@@ -167,16 +167,16 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::appendRowid(typeobj objn, typeobj objd, typedba bdba, typeslot slot) {
+    void OutputBufferJson::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot) {
         uint32_t afn = bdba >> 22;
         bdba &= 0x003FFFFF;
         outputBufferAppend("\"rid\":\"");
-        outputBufferAppend(map64[(objd >> 30) & 0x3F]);
-        outputBufferAppend(map64[(objd >> 24) & 0x3F]);
-        outputBufferAppend(map64[(objd >> 18) & 0x3F]);
-        outputBufferAppend(map64[(objd >> 12) & 0x3F]);
-        outputBufferAppend(map64[(objd >> 6) & 0x3F]);
-        outputBufferAppend(map64[objd & 0x3F]);
+        outputBufferAppend(map64[(dataObj >> 30) & 0x3F]);
+        outputBufferAppend(map64[(dataObj >> 24) & 0x3F]);
+        outputBufferAppend(map64[(dataObj >> 18) & 0x3F]);
+        outputBufferAppend(map64[(dataObj >> 12) & 0x3F]);
+        outputBufferAppend(map64[(dataObj >> 6) & 0x3F]);
+        outputBufferAppend(map64[dataObj & 0x3F]);
         outputBufferAppend(map64[(afn >> 12) & 0x3F]);
         outputBufferAppend(map64[(afn >> 6) & 0x3F]);
         outputBufferAppend(map64[afn & 0x3F]);
@@ -240,9 +240,9 @@ namespace OpenLogReplicator {
         outputBufferAppend(object->name);
         outputBufferAppend('"');
 
-        if ((schemaFormat & SCHEMA_FORMAT_OBJN) != 0) {
-            outputBufferAppend(",\"objn\":");
-            appendDec(object->objn);
+        if ((schemaFormat & SCHEMA_FORMAT_OBJ) != 0) {
+            outputBufferAppend(",\"obj\":");
+            appendDec(object->obj);
         }
 
         if ((schemaFormat & SCHEMA_FORMAT_FULL) != 0) {
@@ -524,7 +524,7 @@ namespace OpenLogReplicator {
             else
                 hasPreviousRedo = true;
         } else {
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             outputBufferAppend('{');
             appendHeader(false);
             outputBufferAppend(",\"payload\":[");
@@ -533,7 +533,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"c\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
         outputBufferAppend(",\"after\":{");
 
         hasPreviousColumn = false;
@@ -567,7 +567,7 @@ namespace OpenLogReplicator {
             else
                 hasPreviousRedo = true;
         } else {
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             outputBufferAppend('{');
             appendHeader(false);
             outputBufferAppend(",\"payload\":[");
@@ -576,7 +576,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"u\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
         outputBufferAppend(",\"before\":{");
 
         hasPreviousColumn = false;
@@ -629,7 +629,7 @@ namespace OpenLogReplicator {
             else
                 hasPreviousRedo = true;
         } else {
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             outputBufferAppend('{');
             appendHeader(false);
             outputBufferAppend(",\"payload\":[");
@@ -638,7 +638,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"d\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
         outputBufferAppend(",\"before\":{");
 
         hasPreviousColumn = false;
@@ -672,7 +672,7 @@ namespace OpenLogReplicator {
             else
                 hasPreviousRedo = true;
         } else {
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             outputBufferAppend('{');
             appendHeader(false);
             outputBufferAppend(",\"payload\":[");

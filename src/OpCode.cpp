@@ -54,7 +54,7 @@ namespace OpenLogReplicator {
                         " CLS:" << redoLogRecord->cls <<
                         " AFN:" << redoLogRecord->afn <<
                         " DBA:0x" << setfill('0') << setw(8) << hex << redoLogRecord->dba <<
-                        " OBJ:" << dec << redoLogRecord->recordObjd <<
+                        " OBJ:" << dec << redoLogRecord->recordDataObj <<
                         " SCN:" << PRINTSCN48(redoLogRecord->scnRecord) <<
                         " SEQ:" << dec << (uint64_t)redoLogRecord->seq <<
                         " OP:" << (uint64_t)(redoLogRecord->opCode >> 8) << "." << (uint64_t)(redoLogRecord->opCode & 0xFF) <<
@@ -77,7 +77,7 @@ namespace OpenLogReplicator {
                         " CLS:" << redoLogRecord->cls <<
                         " AFN:" << redoLogRecord->afn <<
                         " DBA:0x" << setfill('0') << setw(8) << hex << redoLogRecord->dba <<
-                        " OBJ:" << dec << redoLogRecord->recordObjd <<
+                        " OBJ:" << dec << redoLogRecord->recordDataObj <<
                         " SCN:" << PRINTSCN48(redoLogRecord->scnRecord) <<
                         " SEQ:" << dec << (uint64_t)redoLogRecord->seq <<
                         " OP:" << (uint64_t)(redoLogRecord->opCode >> 8) << "." << (uint64_t)(redoLogRecord->opCode & 0xFF) <<
@@ -101,7 +101,7 @@ namespace OpenLogReplicator {
                         " CLS:" << redoLogRecord->cls <<
                         " AFN:" << redoLogRecord->afn <<
                         " DBA:0x" << setfill('0') << setw(8) << hex << redoLogRecord->dba <<
-                        " OBJ:" << dec << redoLogRecord->recordObjd <<
+                        " OBJ:" << dec << redoLogRecord->recordDataObj <<
                         " SCN:" << PRINTSCN64(redoLogRecord->scnRecord) <<
                         " SEQ:" << dec << (uint64_t)redoLogRecord->seq <<
                         " OP:" << (uint64_t)(redoLogRecord->opCode >> 8) << "." << (uint64_t)(redoLogRecord->opCode & 0xFF) <<
@@ -755,8 +755,8 @@ namespace OpenLogReplicator {
             return;
         }
 
-        redoLogRecord->objn = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 0);
-        redoLogRecord->objd = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 4);
+        redoLogRecord->obj = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 0);
+        redoLogRecord->dataObj = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 4);
         redoLogRecord->tsn = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 8);
         redoLogRecord->undo = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 12);
         redoLogRecord->opc = (((typeop1)redoLogRecord->data[fieldPos + 16]) << 8) | redoLogRecord->data[fieldPos + 17];
@@ -781,8 +781,8 @@ namespace OpenLogReplicator {
                     " slt: " << dec << (uint64_t)redoLogRecord->slt <<
                     " rci: " << dec << (uint64_t)redoLogRecord->rci <<
                     " opc: " << dec << (uint64_t)(redoLogRecord->opc >> 8) << "." << (uint64_t)(redoLogRecord->opc & 0xFF) <<
-                    " " << prevObj << "objn: " << dec << redoLogRecord->objn <<
-                    " objd: " << dec << redoLogRecord->objd <<
+                    " " << prevObj << "objn: " << dec << redoLogRecord->obj <<
+                    " objd: " << dec << redoLogRecord->dataObj <<
                     " tsn: " << dec << redoLogRecord->tsn << postObj << endl;
         } else {
             typedba prevDba = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 12);
@@ -796,8 +796,8 @@ namespace OpenLogReplicator {
                     " prev dba:  0x" << setfill('0') << setw(8) << hex << prevDba <<
                     " rci: " << dec << (uint64_t)redoLogRecord->rci <<
                     " opc: " << dec << (uint64_t)(redoLogRecord->opc >> 8) << "." << (uint64_t)(redoLogRecord->opc & 0xFF) <<
-                    " [objn: " << dec << redoLogRecord->objn <<
-                    " objd: " << dec << redoLogRecord->objd <<
+                    " [objn: " << dec << redoLogRecord->obj <<
+                    " objd: " << dec << redoLogRecord->dataObj <<
                     " tsn: " << dec << redoLogRecord->tsn << "]" << endl;
         }
 

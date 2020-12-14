@@ -41,9 +41,6 @@ typedef uint32_t typedba;
 typedef uint16_t typeslot;
 typedef uint8_t typeslt;
 typedef uint8_t typerci;
-typedef int64_t typecol;
-typedef uint32_t typeobj;
-typedef uint64_t typeobj2;
 typedef uint32_t typeseq;
 typedef uint64_t typeuba;
 typedef uint64_t typexid;
@@ -51,7 +48,13 @@ typedef uint32_t typeusnslt;
 typedef uint64_t typescn;
 typedef uint16_t typesubscn;
 typedef uint32_t typeseq;
-typedef uint64_t typeuser;
+
+typedef uint32_t typeOBJ;
+typedef uint32_t typeDATAOBJ;
+typedef uint64_t typeOBJ2;
+typedef int16_t typeCOL;
+typedef uint32_t typeCON;
+typedef uint32_t typeUSER;
 
 typedef uint16_t typeunicode16;
 typedef uint32_t typeunicode32;
@@ -105,7 +108,7 @@ typedef uint64_t typeunicode;
 #define SCHEMA_FORMAT_NAME                      0
 #define SCHEMA_FORMAT_FULL                      1
 #define SCHEMA_FORMAT_REPEATED                  2
-#define SCHEMA_FORMAT_OBJN                      4
+#define SCHEMA_FORMAT_OBJ                       4
 
 //default, only changed columns for update, or PK
 #define COLUMN_FORMAT_CHANGED                   0

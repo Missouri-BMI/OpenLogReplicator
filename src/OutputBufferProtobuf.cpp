@@ -93,17 +93,17 @@ namespace OpenLogReplicator {
         valuePB->set_name(columnName);
     }
 
-    void OutputBufferProtobuf::appendRowid(typeobj objn, typeobj objd, typedba bdba, typeslot slot) {
+    void OutputBufferProtobuf::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot) {
         uint32_t afn = bdba >> 22;
         bdba &= 0x003FFFFF;
 
         char rid[18];
-        rid[0] = map64[(objd >> 30) & 0x3F];
-        rid[1] = map64[(objd >> 24) & 0x3F];
-        rid[2] = map64[(objd >> 18) & 0x3F];
-        rid[3] = map64[(objd >> 12) & 0x3F];
-        rid[4] = map64[(objd >> 6) & 0x3F];
-        rid[5] = map64[objd & 0x3F];
+        rid[0] = map64[(dataObj >> 30) & 0x3F];
+        rid[1] = map64[(dataObj >> 24) & 0x3F];
+        rid[2] = map64[(dataObj >> 18) & 0x3F];
+        rid[3] = map64[(dataObj >> 12) & 0x3F];
+        rid[4] = map64[(dataObj >> 6) & 0x3F];
+        rid[5] = map64[dataObj & 0x3F];
         rid[6] = map64[(afn >> 12) & 0x3F];
         rid[7] = map64[(afn >> 6) & 0x3F];
         rid[8] = map64[afn & 0x3F];
@@ -159,8 +159,8 @@ namespace OpenLogReplicator {
         schemaPB->set_owner(object->owner);
         schemaPB->set_name(object->name);
 
-        if ((schemaFormat & SCHEMA_FORMAT_OBJN) != 0)
-            schemaPB->set_objn(object->objn);
+        if ((schemaFormat & SCHEMA_FORMAT_OBJ) != 0)
+            schemaPB->set_obj(object->obj);
 
         if ((schemaFormat & SCHEMA_FORMAT_FULL) != 0) {
             if ((schemaFormat & SCHEMA_FORMAT_REPEATED) == 0) {
@@ -351,7 +351,7 @@ namespace OpenLogReplicator {
             if (redoResponsePB != nullptr) {
                 RUNTIME_FAIL("ERROR, PB insert processing failed, message already exists, internal error");
             }
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             redoResponsePB = new pb::RedoResponse;
             appendHeader(true);
         }
@@ -363,7 +363,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;
@@ -409,7 +409,7 @@ namespace OpenLogReplicator {
             if (redoResponsePB != nullptr) {
                 RUNTIME_FAIL("ERROR, PB update processing failed, message already exists, internal error");
             }
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             redoResponsePB = new pb::RedoResponse;
             appendHeader(true);
         }
@@ -421,7 +421,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;
@@ -488,7 +488,7 @@ namespace OpenLogReplicator {
             if (redoResponsePB != nullptr) {
                 RUNTIME_FAIL("ERROR, PB delete processing failed, message already exists, internal error");
             }
-            outputBufferBegin(object->objn);
+            outputBufferBegin(object->obj);
             redoResponsePB = new pb::RedoResponse;
             appendHeader(true);
         }
@@ -500,7 +500,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->objn, object->objd, bdba, slot);
+        appendRowid(object->obj, object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;

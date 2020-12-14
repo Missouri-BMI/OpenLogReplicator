@@ -141,8 +141,8 @@ namespace OpenLogReplicator {
                                     " scn: " << dec << redoLogRecord1->scn <<
                                     " subScn: " << dec << redoLogRecord1->subScn <<
                                     " scnRecord: " << dec << redoLogRecord1->scnRecord <<
-                                    " objn: " << dec << redoLogRecord1->objn <<
-                                    " objd: " << dec << redoLogRecord1->objd <<
+                                    " obj: " << dec << redoLogRecord1->obj <<
+                                    " dataObj: " << dec << redoLogRecord1->dataObj <<
                                     " flg1: 0x" << setfill('0') << setw(4) << hex << redoLogRecord1->flg <<
                                     " flg2: 0x" << setfill('0') << setw(4) << hex << redoLogRecord2->flg <<
                                     " uba1: " << PRINTUBA(redoLogRecord1->uba) <<

@@ -32,27 +32,29 @@ namespace OpenLogReplicator {
     class OracleObject;
     class SchemaElement;
 
-    struct SysCCol {
+    struct SysUser {
         string rowid;
-        typecol con;        //pk
-        typecol intCol;     //pk
-        uint64_t objn;
+        typeUSER user;      //pk
+        string name;
         uint64_t spare1;
     };
 
-    struct SysCDef {
+    struct SysObj {
         string rowid;
-        typecol con;        //pk
-        typeobj objn;
+        typeUSER owner;
+        typeOBJ obj;       //pk
+        typeDATAOBJ dataObj;
         uint64_t type;
+        string name;
+        uint32_t flags;
     };
 
     struct SysCol {
         string rowid;
-        typeobj objn;       //pk
-        typecol col;
-        typecol segCol;
-        typecol intCol;     //pk
+        typeOBJ obj;       //pk
+        typeCOL col;
+        typeCOL segCol;
+        typeCOL intCol;     //pk
         string name;
         uint64_t type;
         uint64_t length;
@@ -64,34 +66,46 @@ namespace OpenLogReplicator {
         uintX_t property;
     };
 
+    struct SysCCol {
+        string rowid;
+        typeCON con;        //pk
+        typeCOL intCol;     //pk
+        typeOBJ obj;
+        uint64_t spare1;
+    };
+
+    struct SysCDef {
+        string rowid;
+        typeCON con;        //pk
+        typeOBJ obj;
+        uint64_t type;
+    };
+
+    struct SysDeferredStg {
+        string rowid;
+        typeOBJ obj;       //pk
+        uint64_t flagsStg;
+    };
+
     struct SysECol {
         string rowid;
-        typeobj objn;
+        typeOBJ obj;
         uint32_t colNum;
         uint32_t guardId;
     };
 
-    struct SysObj {
+    struct SysSeg {
         string rowid;
-        typeobj objn;       //pk
-        typeobj objd;
-        uint32_t owner;
-        uint64_t type;
-        string name;
-        uint32_t flags;
-    };
-
-    struct SysUser {
-        string rowid;
-        uint64_t user;      //pk
-        string name;
+        uint32_t file;
+        uint32_t block;
+        uint32_t ts;
         uint64_t spare1;
     };
 
     struct SysTab {
         string rowid;
-        typeobj objn;       //pk
-        typeobj objd;
+        typeOBJ obj;       //pk
+        typeDATAOBJ dataObj;
         uint32_t ts;
         uint32_t file;
         uint32_t block;
@@ -100,30 +114,59 @@ namespace OpenLogReplicator {
         uintX_t property;
     };
 
+    struct SysTabPart {
+        string rowid;
+        typeOBJ obj;
+        typeDATAOBJ dataObj;
+        typeOBJ bo;
+    };
+
+    struct SysTabComPart {
+        string rowid;
+        typeOBJ obj;
+        typeDATAOBJ dataObj;
+        typeOBJ bo;
+    };
+
+    struct SysTabSubPart {
+        string rowid;
+        typeOBJ obj;
+        typeDATAOBJ dataObj;
+        typeOBJ pobj;
+    };
+
     class Schema {
     protected:
         stringstream& writeEscapeValue(stringstream &ss, string &str);
-        unordered_map<typeobj, OracleObject*> objectMap;
-        unordered_map<typeobj, OracleObject*> partitionMap;
+        unordered_map<typeOBJ, OracleObject*> objectMap;
+        unordered_map<typeOBJ, OracleObject*> partitionMap;
 
     public:
         OracleObject *object;
         vector<SchemaElement*> elements;
-        unordered_map<uint64_t, SysCCol*> sysCColMap;
-        unordered_map<typecol, SysCDef*> sysCDefMap;
-        unordered_map<uint64_t, SysCol*> sysColMap;
-        unordered_map<typeobj, SysObj*> sysObjMap;
-        unordered_map<typeuser, SysUser*> sysUserMap;
-        unordered_map<uint64_t, SysECol*> sysEColMap;
 
         Schema();
         virtual ~Schema();
 
         bool readSchema(OracleAnalyzer *oracleAnalyzer);
         void writeSchema(OracleAnalyzer *oracleAnalyzer);
-        OracleObject *checkDict(typeobj objn, typeobj objd);
+        OracleObject *checkDict(typeOBJ obj, typeDATAOBJ dataObj);
         void addToDict(OracleObject *object);
         SchemaElement* addElement(void);
+        bool dictSysUserAdd(const char *rowid, typeUSER user, const char *name, uint64_t spare1);
+        bool dictSysObjAdd(const char *rowid, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags);
+        bool dictSysColAdd(const char *rowid, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+                int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2);
+        bool dictSysCColAdd(const char *rowid, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1);
+        bool dictSysCDefAdd(const char *rowid, typeCON con, typeOBJ obj, uint64_t type);
+        bool dictSysDeferredStg(const char *rowid, typeOBJ obj, uint64_t flagsStg);
+        bool dictSysECol(const char *rowid, typeOBJ obj, uint32_t colNum, uint32_t guardId);
+        bool dictSysSeg(const char *rowid, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1);
+        bool dictSysTab(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+                uint64_t flags, uint64_t property1, uint64_t property2);
+        bool dictSysTabPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
+        bool dictSysTabComPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
+        bool dictSysTabSubPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pobj);
     };
 }
 

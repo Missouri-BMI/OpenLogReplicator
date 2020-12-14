@@ -873,8 +873,8 @@ namespace OpenLogReplicator {
         if (fieldNum > redoLogRecord->fieldCnt) {
             REDOLOG_FAIL("field missing in vector, field: " << dec << fieldNum << "/" << redoLogRecord->fieldCnt <<
                     ", data: " << dec << redoLogRecord->rowData <<
-                    ", objn: " << dec << redoLogRecord->objn <<
-                    ", objd: " << dec << redoLogRecord->objd <<
+                    ", obj: " << dec << redoLogRecord->obj <<
+                    ", dataObj: " << dec << redoLogRecord->dataObj <<
                     ", op: " << hex << redoLogRecord->opCode <<
                     ", cc: " << dec << (uint64_t)redoLogRecord->cc <<
                     ", suppCC: " << dec << redoLogRecord->suppLogCC);

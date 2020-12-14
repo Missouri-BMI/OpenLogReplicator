@@ -418,8 +418,8 @@ namespace OpenLogReplicator {
                                     ": incomplete record, pos: " << dec << redoLogRecord[vectors].fieldPos << ", length: " << redoLogRecord[vectors].length);
             }
 
-            redoLogRecord[vectors].recordObjn = 0xFFFFFFFF;
-            redoLogRecord[vectors].recordObjd = 0xFFFFFFFF;
+            redoLogRecord[vectors].recordObj = 0xFFFFFFFF;
+            redoLogRecord[vectors].recordDataObj = 0xFFFFFFFF;
 
             pos += redoLogRecord[vectors].length;
 
@@ -559,8 +559,8 @@ namespace OpenLogReplicator {
                 opCodesUndo[vectorsUndo++] = vectors;
                 isUndoRedo[vectors] = 1;
                 if (vectorsUndo <= vectorsRedo) {
-                    redoLogRecord[opCodesRedo[vectorsUndo - 1]].recordObjd = redoLogRecord[opCodesUndo[vectorsUndo - 1]].objd;
-                    redoLogRecord[opCodesRedo[vectorsUndo - 1]].recordObjn = redoLogRecord[opCodesUndo[vectorsUndo - 1]].objn;
+                    redoLogRecord[opCodesRedo[vectorsUndo - 1]].recordDataObj = redoLogRecord[opCodesUndo[vectorsUndo - 1]].dataObj;
+                    redoLogRecord[opCodesRedo[vectorsUndo - 1]].recordObj = redoLogRecord[opCodesUndo[vectorsUndo - 1]].obj;
                 }
             //REDO
             } else if ((redoLogRecord[vectors].opCode & 0xFF00) == 0x0A00 ||
@@ -568,8 +568,8 @@ namespace OpenLogReplicator {
                 opCodesRedo[vectorsRedo++] = vectors;
                 isUndoRedo[vectors] = 2;
                 if (vectorsRedo <= vectorsUndo) {
-                    redoLogRecord[opCodesRedo[vectorsRedo - 1]].recordObjd = redoLogRecord[opCodesUndo[vectorsRedo - 1]].objd;
-                    redoLogRecord[opCodesRedo[vectorsRedo - 1]].recordObjn = redoLogRecord[opCodesUndo[vectorsRedo - 1]].objn;
+                    redoLogRecord[opCodesRedo[vectorsRedo - 1]].recordDataObj = redoLogRecord[opCodesUndo[vectorsRedo - 1]].dataObj;
+                    redoLogRecord[opCodesRedo[vectorsRedo - 1]].recordObj = redoLogRecord[opCodesUndo[vectorsRedo - 1]].obj;
                 }
             }
 
@@ -623,7 +623,7 @@ namespace OpenLogReplicator {
         if ((oracleAnalyzer->flags & REDO_FLAGS_TRACK_DDL) == 0)
             return;
 
-        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->objn, redoLogRecord->objd);
+        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
         if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
             return;
 
@@ -653,7 +653,7 @@ namespace OpenLogReplicator {
         if ((redoLogRecord->flg & (FLG_MULTIBLOCKUNDOHEAD | FLG_MULTIBLOCKUNDOMID | FLG_MULTIBLOCKUNDOTAIL)) == 0)
             return;
 
-        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->objn, redoLogRecord->objd);
+        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
         if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
             return;
 
@@ -758,17 +758,19 @@ namespace OpenLogReplicator {
                 (redoLogRecord2->opCode == 0x0506 || redoLogRecord2->opCode == 0x050B))
             return;
 
-        typeobj objn, objd;
-        if (redoLogRecord1->objd != 0) {
-            objn = redoLogRecord1->objn;
-            objd = redoLogRecord1->objd;
-            redoLogRecord2->objn = redoLogRecord1->objn;
-            redoLogRecord2->objd = redoLogRecord1->objd;
+        typeOBJ obj;
+        typeDATAOBJ dataObj;
+
+        if (redoLogRecord1->dataObj != 0) {
+            obj = redoLogRecord1->obj;
+            dataObj = redoLogRecord1->dataObj;
+            redoLogRecord2->obj = redoLogRecord1->obj;
+            redoLogRecord2->dataObj = redoLogRecord1->dataObj;
         } else {
-            objn = redoLogRecord2->objn;
-            objd = redoLogRecord2->objd;
-            redoLogRecord1->objn = redoLogRecord2->objn;
-            redoLogRecord1->objd = redoLogRecord2->objd;
+            obj = redoLogRecord2->obj;
+            dataObj = redoLogRecord2->dataObj;
+            redoLogRecord1->obj = redoLogRecord2->obj;
+            redoLogRecord1->dataObj = redoLogRecord2->dataObj;
         }
 
         if (redoLogRecord1->bdba != redoLogRecord2->bdba && redoLogRecord1->bdba != 0 && redoLogRecord2->bdba != 0) {
@@ -777,7 +779,7 @@ namespace OpenLogReplicator {
             REDOLOG_FAIL("BDBA does not match (0x" << hex << redoLogRecord1->bdba << ", " << redoLogRecord2->bdba << ")");
         }
 
-        redoLogRecord1->object = oracleAnalyzer->schema->checkDict(objn, objd);
+        redoLogRecord1->object = oracleAnalyzer->schema->checkDict(obj, dataObj);
         if (redoLogRecord1->object == nullptr)
             return;
 

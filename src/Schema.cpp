@@ -53,18 +53,6 @@ namespace OpenLogReplicator {
         }
         objectMap.clear();
 
-        for (auto it : sysObjMap) {
-            SysObj *sysObjTmp = it.second;
-            delete sysObjTmp;
-        }
-        sysObjMap.clear();
-
-        for (auto it : sysUserMap) {
-            SysUser *sysUserTmp = it.second;
-            delete sysUserTmp;
-        }
-        sysUserMap.clear();
-
         for (SchemaElement *element : elements) {
             delete element;
         }
@@ -160,13 +148,13 @@ namespace OpenLogReplicator {
         }
 
         for (SizeType i = 0; i < schema.Size(); ++i) {
-            const Value& objnJSON = getJSONfieldV(fileName, schema[i], "objn");
-            typeobj objn = objnJSON.GetInt64();
+            const Value& objJSON = getJSONfieldV(fileName, schema[i], "obj");
+            typeOBJ obj = objJSON.GetInt64();
+            typeDATAOBJ dataObj = 0;
 
-            typeobj objd = 0;
-            if (schema[i].HasMember("objd")) {
-                const Value& objdJSON = getJSONfieldV(fileName, schema[i], "objd");
-                objd = objdJSON.GetInt64();
+            if (schema[i].HasMember("data-obj")) {
+                const Value& dataObjJSON = getJSONfieldV(fileName, schema[i], "data-obj");
+                dataObj = dataObjJSON.GetInt64();
             }
 
             const Value& cluColsJSON = getJSONfieldV(fileName, schema[i], "clu-cols");
@@ -179,7 +167,7 @@ namespace OpenLogReplicator {
             uint64_t options = optionsJSON.GetInt64();
 
             const Value& maxSegColJSON = getJSONfieldV(fileName, schema[i], "max-seg-col");
-            typecol maxSegCol = maxSegColJSON.GetInt64();
+            typeCOL maxSegCol = maxSegColJSON.GetInt();
 
             const Value& ownerJSON = getJSONfieldV(fileName, schema[i], "owner");
             const char *owner = ownerJSON.GetString();
@@ -187,7 +175,7 @@ namespace OpenLogReplicator {
             const Value& nameJSON = getJSONfieldV(fileName, schema[i], "name");
             const char *name = nameJSON.GetString();
 
-            object = new OracleObject(objn, objd, cluCols, options, owner, name);
+            object = new OracleObject(obj, dataObj, cluCols, options, owner, name);
             object->totalPk = totalPk;
             object->maxSegCol = maxSegCol;
 
@@ -198,13 +186,13 @@ namespace OpenLogReplicator {
 
             for (SizeType j = 0; j < columns.Size(); ++j) {
                 const Value& colNoJSON = getJSONfieldV(fileName, columns[j], "col-no");
-                typecol colNo = colNoJSON.GetInt64();
+                typeCOL colNo = colNoJSON.GetInt();
 
                 const Value& guardSegNoJSON = getJSONfieldV(fileName, columns[j], "guard-seg-no");
-                typecol guardSegNo = guardSegNoJSON.GetInt64();
+                typeCOL guardSegNo = guardSegNoJSON.GetInt();
 
                 const Value& segColNoJSON = getJSONfieldV(fileName, columns[j], "seg-col-no");
-                typecol segColNo = segColNoJSON.GetInt64();
+                typeCOL segColNo = segColNoJSON.GetInt();
                 if (segColNo > 1000) {
                     CONFIG_FAIL("bad JSON in <database>-schema.json, invalid seg-col-no value");
                 }
@@ -264,13 +252,13 @@ namespace OpenLogReplicator {
                 }
 
                 for (SizeType j = 0; j < partitions.Size(); ++j) {
-                    const Value& partitionObjnJSON = getJSONfieldV(fileName, partitions[j], "objn");
-                    uint64_t partitionObjn = partitionObjnJSON.GetUint64();
+                    const Value& partitionObjJSON = getJSONfieldV(fileName, partitions[j], "obj");
+                    uint64_t partitionObj = partitionObjJSON.GetUint64();
 
-                    const Value& partitionObjdJSON = getJSONfieldV(fileName, partitions[j], "objd");
-                    uint64_t partitionObjd = partitionObjdJSON.GetUint64();
+                    const Value& partitionDataObjJSON = getJSONfieldV(fileName, partitions[j], "data-obj");
+                    uint64_t partitionDataObj = partitionDataObjJSON.GetUint64();
 
-                    typeobj2 objx = (((typeobj2)partitionObjn)<<32) | ((typeobj2)partitionObjd);
+                    typeOBJ2 objx = (((typeOBJ2)partitionObj)<<32) | ((typeOBJ2)partitionDataObj);
                     object->partitions.push_back(objx);
                 }
             }
@@ -352,8 +340,8 @@ namespace OpenLogReplicator {
             else
                 hasPrev = true;
 
-            ss << "{\"objn\":" << dec << objectTmp->objn << "," <<
-                    "\"objd\":" << dec << objectTmp->objd << "," <<
+            ss << "{\"obj\":" << dec << objectTmp->obj << "," <<
+                    "\"data-obj\":" << dec << objectTmp->dataObj << "," <<
                     "\"clu-cols\":" << dec << objectTmp->cluCols << "," <<
                     "\"total-pk\":" << dec << objectTmp->totalPk << "," <<
                     "\"options\":" << dec << objectTmp->options << "," <<
@@ -392,10 +380,10 @@ namespace OpenLogReplicator {
                 for (uint64_t i = 0; i < objectTmp->partitions.size(); ++i) {
                     if (i > 0)
                         ss << ",";
-                    typeobj partitionObjn = objectTmp->partitions[i] >> 32;
-                    typeobj partitionObjd = objectTmp->partitions[i] & 0xFFFFFFFF;
-                    ss << "{\"objn\":" << dec << partitionObjn << "," <<
-                            "\"objd\":" << dec << partitionObjd << "}";
+                    typeOBJ partitionObj = objectTmp->partitions[i] >> 32;
+                    typeDATAOBJ partitionDataObj = objectTmp->partitions[i] & 0xFFFFFFFF;
+                    ss << "{\"obj\":" << dec << partitionObj << "," <<
+                            "\"data-obj\":" << dec << partitionDataObj << "}";
                 }
                 ss << "]";
             }
@@ -408,32 +396,32 @@ namespace OpenLogReplicator {
     }
 
     void Schema::addToDict(OracleObject *object) {
-        if (objectMap[object->objn] == nullptr) {
-            objectMap[object->objn] = object;
+        if (objectMap[object->obj] == nullptr) {
+            objectMap[object->obj] = object;
         } else {
-            CONFIG_FAIL("can't add object objn: " << dec << object->objn << ", objd: " << object->objd << " - another object with the same id");
+            CONFIG_FAIL("can't add object obj: " << dec << object->obj << ", dataObj: " << object->dataObj << " - another object with the same id");
         }
 
-        if (partitionMap[object->objn] == nullptr) {
-            partitionMap[object->objn] = object;
+        if (partitionMap[object->obj] == nullptr) {
+            partitionMap[object->obj] = object;
         } else {
-            CONFIG_FAIL("can't add object objn: " << dec << object->objn << ", objd: " << object->objn << " - another object with the same id");
+            CONFIG_FAIL("can't add object obj: " << dec << object->obj << ", dataObj: " << object->dataObj << " - another object with the same id");
         }
 
-        for (typeobj2 objx : object->partitions) {
-            typeobj partitionObjn = objx >> 32;
-            typeobj partitionObjd = objx & 0xFFFFFFFF;
+        for (typeOBJ2 objx : object->partitions) {
+            typeOBJ partitionObj = objx >> 32;
+            typeDATAOBJ partitionDataObj = objx & 0xFFFFFFFF;
 
-            if (partitionMap[partitionObjn] == nullptr) {
-                partitionMap[partitionObjn] = object;
+            if (partitionMap[partitionObj] == nullptr) {
+                partitionMap[partitionObj] = object;
             } else {
-                CONFIG_FAIL("can't add object objn: " << dec << partitionObjn << ", objd: " << partitionObjd << " - another object with the same id");
+                CONFIG_FAIL("can't add object obj: " << dec << partitionObj << ", dataObj: " << partitionDataObj << " - another object with the same id");
             }
         }
     }
 
-    OracleObject *Schema::checkDict(typeobj objn, typeobj objd) {
-        auto it = partitionMap.find(objn);
+    OracleObject *Schema::checkDict(typeOBJ obj, typeDATAOBJ dataObj) {
+        auto it = partitionMap.find(obj);
         if (it == partitionMap.end())
             return nullptr;
         return (*it).second;
@@ -462,4 +450,55 @@ namespace OpenLogReplicator {
         elements.push_back(element);
         return element;
     }
+
+    bool Schema::dictSysUserAdd(const char *rowid, typeUSER user, const char *name, uint64_t spare1) {
+        return true;
+    }
+
+    bool Schema::dictSysObjAdd(const char *rowid, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags) {
+        return true;
+    }
+
+    bool Schema::dictSysColAdd(const char *rowid, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+            int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2) {
+        return true;
+    }
+
+    bool Schema::dictSysCColAdd(const char *rowid, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1) {
+        return true;
+    }
+
+    bool Schema::dictSysCDefAdd(const char *rowid, typeCON con, typeOBJ obj, uint64_t type) {
+        return true;
+    }
+
+    bool Schema::dictSysDeferredStg(const char *rowid, typeOBJ obj, uint64_t flagsStg) {
+        return true;
+    }
+
+    bool Schema::dictSysECol(const char *rowid, typeOBJ obj, uint32_t colNum, uint32_t guardId) {
+        return true;
+    }
+
+    bool Schema::dictSysSeg(const char *rowid, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1) {
+        return true;
+    }
+
+    bool Schema::dictSysTab(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+            uint64_t flags, uint64_t property1, uint64_t property2) {
+        return true;
+    }
+
+    bool Schema::dictSysTabPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+        return true;
+    }
+
+    bool Schema::dictSysTabComPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+        return true;
+    }
+
+    bool Schema::dictSysTabSubPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pobj) {
+        return true;
+    }
+
 }

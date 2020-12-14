@@ -104,8 +104,8 @@ namespace OpenLogReplicator {
         typeconid conId;
         uint32_t flgRecord;
         uint32_t vectorNo;
-        typeobj recordObjn;
-        typeobj recordObjd;
+        typeOBJ recordObj;
+        typeOBJ recordDataObj;
 
         typeseq sequence;
         typescn scn;              //scn
@@ -125,8 +125,8 @@ namespace OpenLogReplicator {
         uint64_t length;          //length
         typedba dba;
         typedba bdba;             //block DBA
-        typeobj objn;             //object ID
-        typeobj objd;             //data object ID
+        typeOBJ obj;              //object ID
+        typeOBJ dataObj;          //data object ID
         uint32_t tsn;
         uint32_t undo;
         int16_t usn;

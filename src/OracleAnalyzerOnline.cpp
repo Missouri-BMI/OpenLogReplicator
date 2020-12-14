@@ -328,7 +328,7 @@ namespace OpenLogReplicator {
             " WHERE"
             "   PROPERTY_NAME = :i");
 
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_CCOL(
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_CCOL_USER(
             "SELECT"
             "   L.ROWID, L.CON#, L.INTCOL#, L.OBJ#, L.SPARE1"
             " FROM"
@@ -339,7 +339,15 @@ namespace OpenLogReplicator {
             " WHERE"
             "   O.OWNER# = :k");
 
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_CDEF(
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_CCOL_OBJ(
+            "SELECT"
+            "   L.ROWID, L.CON#, L.INTCOL#, L.OBJ#, L.SPARE1"
+            " FROM"
+            "   SYS.CCOL$ AS OF SCN :j L"
+            " WHERE"
+            "   L.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_CDEF_USER(
             "SELECT"
             "   D.ROWID, D.CON#, D.OBJ#, D.TYPE#"
             " FROM"
@@ -350,9 +358,17 @@ namespace OpenLogReplicator {
             " WHERE"
             "   O.OWNER# = :k");
 
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_COL(
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_CDEF_OBJ(
             "SELECT"
-            "   C.ROWID, C.COL#, C.SEGCOL#, C.INTCOL#, C.NAME, C.TYPE#, C.LENGTH, C.PRECISION#, C.SCALE, C.CHARSETFORM, C.CHARSETID, C.NULL$,"
+            "   D.ROWID, D.CON#, D.OBJ#, D.TYPE#"
+            " FROM"
+            "   SYS.CDEF$ AS OF SCN :j D"
+            " WHERE"
+            "   D.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_COL_USER(
+            "SELECT"
+            "   C.ROWID, C.OBJ#, C.COL#, C.SEGCOL#, C.INTCOL#, C.NAME, C.TYPE#, C.LENGTH, C.PRECISION#, C.SCALE, C.CHARSETFORM, C.CHARSETID, C.NULL$,"
             "   MOD(C.PROPERTY, 18446744073709551616), C.PROPERTY / 18446744073709551616"
             " FROM"
             "   SYS.OBJ$ AS OF SCN :i O"
@@ -362,7 +378,35 @@ namespace OpenLogReplicator {
             " WHERE"
             "   O.OWNER# = :k");
 
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_ECOL(
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_COL_OBJ(
+            "SELECT"
+            "   C.ROWID, C.OBJ#, C.COL#, C.SEGCOL#, C.INTCOL#, C.NAME, C.TYPE#, C.LENGTH, C.PRECISION#, C.SCALE, C.CHARSETFORM, C.CHARSETID, C.NULL$,"
+            "   MOD(C.PROPERTY, 18446744073709551616), C.PROPERTY / 18446744073709551616"
+            " FROM"
+            "   SYS.COL$ AS OF SCN :j C"
+            " WHERE"
+            "   C.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_DEFERRED_STG_USER(
+            "SELECT"
+            "   DS.ROWID, DS.OBJ#, DS.FLAGS_STG"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.DEFERRED_STG$ AS OF SCN :j DS ON"
+            "     O.OBJ# = DS.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_DEFERRED_STG_OBJ(
+            "SELECT"
+            "   DS.ROWID, DS.OBJ#, DS.FLAGS_STG"
+            " FROM"
+            "   SYS.DEFERRED_STG$ AS OF SCN :j DS"
+            " WHERE"
+            "   DS.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_ECOL_USER(
             "SELECT"
             "   E.ROWID, E.TABOBJ#, E.COLNUM, E.GUARD_ID"
             " FROM"
@@ -373,13 +417,132 @@ namespace OpenLogReplicator {
             " WHERE"
             "   O.OWNER# = :k");
 
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_OBJ(
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_ECOL_OBJ(
             "SELECT"
-            "   O.ROWID, O.OBJ#, O.DATAOBJ#, O.NAME, O.TYPE#, O.FLAGS"
+            "   E.ROWID, E.TABOBJ#, E.COLNUM, E.GUARD_ID"
+            " FROM"
+            "   SYS.ECOL$ AS OF SCN :j E"
+            " WHERE"
+            "   E.TABOBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_OBJ_USER(
+            "SELECT"
+            "   O.ROWID, O.OWNER#, O.OBJ#, O.DATAOBJ#, O.NAME, O.TYPE#, O.FLAGS"
             " FROM"
             "   SYS.OBJ$ AS OF SCN :i O"
             " WHERE"
             "   O.OWNER# = :j");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_OBJ_NAME(
+            "SELECT"
+            "   O.ROWID, O.OWNER#, O.OBJ#, O.DATAOBJ#, O.NAME, O.TYPE#, O.FLAGS"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " WHERE"
+            "   O.OWNER# = :j AND O.NAME like :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_SEG_USER(
+            "SELECT"
+            "   S.ROWID, S.FILE#, S.BLOCK#, S.TS#, S.SPARE1"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.TAB$ AS OF SCN :i T ON"
+            "     T.OBJ# = O.OBJ#"
+            " JOIN"
+            "   SYS.SEG$ AS OF SCN :j S ON "
+            "     T.FILE# = S.FILE# AND T.BLOCK# = S.BLOCK# AND T.TS# = S.TS#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_SEG_OBJ(
+            "SELECT"
+            "   S.ROWID, S.FILE#, S.BLOCK#, S.TS#, S.SPARE1"
+            " FROM"
+            "   SYS.TAB$ AS OF SCN :i T"
+            " JOIN"
+            "   SYS.SEG$ AS OF SCN :j S ON "
+            "     T.FILE# = S.FILE# AND T.BLOCK# = S.BLOCK# AND T.TS# = S.TS#"
+            " WHERE"
+            "   T.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TAB_USER(
+            "SELECT"
+            "   T.ROWID, T.OBJ#, T.DATAOBJ#, T.TS#, T.FILE#, T.BLOCK#, T.CLUCOLS, T.FLAGS,"
+            "   MOD(T.PROPERTY, 18446744073709551616), T.PROPERTY / 18446744073709551616"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.TAB$ AS OF SCN :j T ON"
+            "     O.OBJ# = T.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TAB_OBJ(
+            "SELECT"
+            "   T.ROWID, T.OBJ#, T.DATAOBJ#, T.TS#, T.FILE#, T.BLOCK#, T.CLUCOLS, T.FLAGS,"
+            "   MOD(T.PROPERTY, 18446744073709551616), T.PROPERTY / 18446744073709551616"
+            " FROM"
+            "   SYS.TAB$ AS OF SCN :j T"
+            " WHERE"
+            "   T.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABCOMPART_USER(
+            "SELECT"
+            "   TCP.ROWID, TCP.OBJ#, TCP.DATAOBJ#, TCP.BO#"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.TABCOMPART$ AS OF SCN :j TCP ON"
+            "     O.OBJ# = TCP.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABCOMPART_OBJ(
+            "SELECT"
+            "   TCP.ROWID, TCP.OBJ#, TCP.DATAOBJ#, TCP.BO#"
+            " FROM"
+            "   SYS.TABCOMPART$ AS OF SCN :j TCP"
+            " WHERE"
+            "   TCP.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABPART_USER(
+            "SELECT"
+            "   TP.ROWID, TP.OBJ#, TP.DATAOBJ#, TP.BO#"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.TABPART$ AS OF SCN :j TP ON"
+            "     O.OBJ# = TP.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABPART_OBJ(
+            "SELECT"
+            "   TP.ROWID, TP.OBJ#, TP.DATAOBJ#, TP.BO#"
+            " FROM"
+            "   SYS.TABPART$ AS OF SCN :j TP"
+            " WHERE"
+            "   TP.OBJ# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABSUBPART_USER(
+            "SELECT"
+            "   TSP.ROWID, TSP.OBJ#, TSP.DATAOBJ#, TSP.POBJ#"
+            " FROM"
+            "   SYS.OBJ$ AS OF SCN :i O"
+            " JOIN"
+            "   SYS.TABSUBPART$ AS OF SCN :j TSP ON"
+            "     O.OBJ# = TSP.OBJ#"
+            " WHERE"
+            "   O.OWNER# = :k");
+
+    const char* OracleAnalyzerOnline::SQL_GET_SYS_TABSUBPART_OBJ(
+            "SELECT"
+            "   TSP.ROWID, TSP.OBJ#, TSP.DATAOBJ#, TSP.POBJ#"
+            " FROM"
+            "   SYS.TABSUBPART$ AS OF SCN :j TSP"
+            " WHERE"
+            "   TSP.OBJ# = :k");
 
     const char* OracleAnalyzerOnline::SQL_GET_SYS_USER(
             "SELECT"
@@ -388,18 +551,6 @@ namespace OpenLogReplicator {
             "   SYS.USER$ AS OF SCN :i U"
             " WHERE"
             "   U.NAME LIKE UPPER(:j)");
-
-    const char* OracleAnalyzerOnline::SQL_GET_SYS_TAB(
-            "SELECT"
-            "   T.ROWID, T.OBJ#, T.DATAOBJ#, T.TS#, T.FILE#, T.BLOCK#, T.CLUCOLS, T.FLAGS,"
-            "   MOD(T.PROPERTY, 18446744073709551616), T.PROPERTY / 18446744073709551616"
-            " FROM"
-            "   SYS.OBJ$ AS OF SCN :i O"
-            " JOIN"
-            "   SYS.COL$ AS OF SCN :j C ON"
-            "     O.OBJ# = T.OBJ#"
-            " WHERE"
-            "   O.OWNER# = :k");
 
     OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database,
             uint64_t trace, uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks,
@@ -783,276 +934,429 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzerOnline::refreshSchema(void) {
+        FULL_("reading dictionaries for SCN " << dec << scn);
+
+        readSystemDictionaries("SYS", "CCOL$", false);
+        readSystemDictionaries("SYS", "CDEF$", false);
+        readSystemDictionaries("SYS", "COL$", false);
+        readSystemDictionaries("SYS", "DEFERRED_STG$", false);
+        readSystemDictionaries("SYS", "ECOL$", false);
+        readSystemDictionaries("SYS", "OBJ$", false);
+        readSystemDictionaries("SYS", "SEG$", false);
+        readSystemDictionaries("SYS", "TAB$", false);
+        readSystemDictionaries("SYS", "TABPART$", false);
+        readSystemDictionaries("SYS", "TABCOMPART$", false);
+        readSystemDictionaries("SYS", "TABSUBPART$", false);
+        readSystemDictionaries("SYS", "USER$", false);
+
         for (SchemaElement *element : schema->elements)
             addTable(element->mask, element->keys, element->keysStr, element->options);
     }
 
-    void OracleAnalyzerOnline::addSchema(string schemaMask) {
-        INFO_("- reading schema: " << schemaMask);
+    void OracleAnalyzerOnline::readSystemDictionariesDetails(typeUSER user, typeOBJ obj) {
+        //reading SYS.COL$
+        DatabaseStatement stmtCol(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_COL_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtCol.createStatement(SQL_GET_SYS_COL_OBJ);
+            stmtCol.bindUInt64(1, scn);
+            stmtCol.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_COL_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtCol.createStatement(SQL_GET_SYS_COL_USER);
+            stmtCol.bindUInt64(1, scn);
+            stmtCol.bindUInt64(2, scn);
+            stmtCol.bindUInt32(3, user);
+        }
+
+        char colRowid[19]; stmtCol.defineString(1, colRowid, sizeof(colRowid));
+        typeOBJ colObj; stmtCol.defineUInt32(2, colObj);
+        typeCOL colCol; stmtCol.defineInt16(3, colCol);
+        typeCOL colSegCol; stmtCol.defineInt16(4, colSegCol);
+        typeCOL colIntCol; stmtCol.defineInt16(5, colIntCol);
+        char colName[129]; stmtCol.defineString(6, colName, sizeof(colName));
+        uint64_t colType; stmtCol.defineUInt64(7, colType);
+        uint64_t colLength; stmtCol.defineUInt64(8, colLength);
+        int64_t colPrecision; stmtCol.defineInt64(9, colPrecision);
+        int64_t colScale; stmtCol.defineInt64(10, colScale);
+        uint64_t colCharsetForm; stmtCol.defineUInt64(11, colCharsetForm);
+        uint64_t colCharsetId; stmtCol.defineUInt64(12, colCharsetId);
+        int64_t colNull; stmtCol.defineInt64(13, colNull);
+        uint64_t colProperty1; stmtCol.defineUInt64(14, colProperty1);
+        uint64_t colProperty2; stmtCol.defineUInt64(15, colProperty2);
+
+        int64_t colRet = stmtCol.executeQuery();
+        while (colRet) {
+            schema->dictSysColAdd(colRowid, colObj, colCol, colSegCol, colIntCol, colName, colType, colLength, colPrecision, colScale, colCharsetForm,
+                    colCharsetId, colNull, colProperty1, colProperty2);
+            colRet = stmtCol.next();
+        }
+
+        //reading SYS.CCOL$
+        DatabaseStatement stmtCCol(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_CCOL_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtCCol.createStatement(SQL_GET_SYS_CCOL_OBJ);
+            stmtCCol.bindUInt64(1, scn);
+            stmtCCol.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_CCOL_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtCCol.createStatement(SQL_GET_SYS_CCOL_USER);
+            stmtCCol.bindUInt64(1, scn);
+            stmtCCol.bindUInt64(2, scn);
+            stmtCCol.bindUInt32(3, user);
+        }
+
+        char ccolRowid[19]; stmtCCol.defineString(1, ccolRowid, sizeof(ccolRowid));
+        typeCOL ccolCon; stmtCCol.defineInt16(2, ccolCon);
+        typeCOL ccolIntCol; stmtCCol.defineInt16(3, ccolIntCol);
+        typeOBJ ccolObj; stmtCCol.defineUInt32(4, ccolObj);
+        uint64_t ccolSpare1; stmtCCol.defineUInt64(5, ccolSpare1);
+
+        int64_t ccolRet = stmtCCol.executeQuery();
+        while (ccolRet) {
+            schema->dictSysCColAdd(ccolRowid, ccolCon, ccolIntCol, ccolObj, ccolSpare1);
+            ccolRet = stmtCCol.next();
+        }
+
+        //reading SYS.CDEF$
+        DatabaseStatement stmtCDef(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_CDEF_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtCDef.createStatement(SQL_GET_SYS_CDEF_OBJ);
+            stmtCDef.bindUInt64(1, scn);
+            stmtCDef.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_CDEF_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtCDef.createStatement(SQL_GET_SYS_CDEF_USER);
+            stmtCDef.bindUInt64(1, scn);
+            stmtCDef.bindUInt64(2, scn);
+            stmtCDef.bindUInt32(3, user);
+        }
+
+        char cdefRowid[19]; stmtCDef.defineString(1, cdefRowid, sizeof(cdefRowid));
+        typeCOL cdefCon; stmtCDef.defineInt16(2, cdefCon);
+        typeOBJ cdefObj; stmtCDef.defineUInt32(3, cdefObj);
+        uint64_t cdefType; stmtCDef.defineUInt64(4, cdefType);
+
+        int64_t cdefRet = stmtCDef.executeQuery();
+        while (cdefRet) {
+            schema->dictSysCDefAdd(cdefRowid, cdefCon, cdefObj, cdefType);
+            cdefRet = stmtCDef.next();
+        }
+
+        //reading SYS.TAB$
+        DatabaseStatement stmtDeferredStg(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_DEFERRED_STG_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtDeferredStg.createStatement(SQL_GET_SYS_DEFERRED_STG_OBJ);
+            stmtDeferredStg.bindUInt64(1, scn);
+            stmtDeferredStg.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_DEFERRED_STG_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtDeferredStg.createStatement(SQL_GET_SYS_DEFERRED_STG_USER);
+            stmtDeferredStg.bindUInt64(1, scn);
+            stmtDeferredStg.bindUInt64(2, scn);
+            stmtDeferredStg.bindUInt32(3, user);
+        }
+
+        char deferredStgRowid[19]; stmtDeferredStg.defineString(1, deferredStgRowid, sizeof(deferredStgRowid));
+        typeOBJ deferredStgObj; stmtDeferredStg.defineUInt32(2, deferredStgObj);
+        uint64_t deferredStgFlagsStg; stmtDeferredStg.defineUInt64(3, deferredStgFlagsStg);
+
+        int64_t deferredStgRet = stmtDeferredStg.executeQuery();
+        while (deferredStgRet) {
+            schema->dictSysDeferredStg(deferredStgRowid, deferredStgObj, deferredStgFlagsStg);
+            deferredStgRet = stmtDeferredStg.next();
+        }
+
+        //reading SYS.ECOL$
+        DatabaseStatement stmtECol(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_ECOL_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtECol.createStatement(SQL_GET_SYS_ECOL_OBJ);
+            stmtECol.bindUInt64(1, scn);
+            stmtECol.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_ECOL_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtECol.createStatement(SQL_GET_SYS_ECOL_USER);
+            stmtECol.bindUInt64(1, scn);
+            stmtECol.bindUInt64(2, scn);
+            stmtECol.bindUInt32(3, user);
+        }
+
+        char ecolRowid[19]; stmtECol.defineString(1, ecolRowid, sizeof(ecolRowid));
+        typeOBJ ecolObj; stmtECol.defineUInt32(2, ecolObj);
+        uint32_t ecolColNum; stmtECol.defineUInt32(3, ecolColNum);
+        uint32_t ecolGuardId; stmtECol.defineUInt32(4, ecolGuardId);
+
+        int64_t ecolRet = stmtECol.executeQuery();
+        while (ecolRet) {
+            schema->dictSysECol(ecolRowid, ecolObj, ecolColNum, ecolGuardId);
+            ecolRet = stmtECol.next();
+        }
+
+        //reading SYS.TAB$
+        DatabaseStatement stmtTab(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TAB_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtTab.createStatement(SQL_GET_SYS_TAB_OBJ);
+            stmtTab.bindUInt64(1, scn);
+            stmtTab.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TAB_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtTab.createStatement(SQL_GET_SYS_TAB_USER);
+            stmtTab.bindUInt64(1, scn);
+            stmtTab.bindUInt64(2, scn);
+            stmtTab.bindUInt32(3, user);
+        }
+
+        char tabRowid[19]; stmtTab.defineString(1, tabRowid, sizeof(tabRowid));
+        typeOBJ tabObj; stmtTab.defineUInt32(2, tabObj);
+        typeDATAOBJ tabDataObj; stmtTab.defineUInt32(3, tabDataObj);
+        uint32_t tabTs; stmtTab.defineUInt32(4, tabTs);
+        uint32_t tabFile; stmtTab.defineUInt32(5, tabFile);
+        uint32_t tabBlock; stmtTab.defineUInt32(6, tabBlock);
+        uint64_t tabCluCols; stmtTab.defineUInt64(7, tabCluCols);
+        uint64_t tabFlags; stmtTab.defineUInt64(8, tabFlags);
+        uint64_t tabProperty1; stmtTab.defineUInt64(9, tabProperty1);
+        uint64_t tabProperty2; stmtTab.defineUInt64(10, tabProperty2);
+
+        int64_t tabRet = stmtTab.executeQuery();
+        while (tabRet) {
+            schema->dictSysTab(tabRowid, tabObj, tabDataObj, tabTs, tabFile, tabBlock, tabCluCols, tabFlags, tabProperty1, tabProperty2);
+            tabRet = stmtTab.next();
+        }
+
+        //reading SYS.TABCOMPART$
+        DatabaseStatement stmtTabComPart(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABCOMPART_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << user);
+            stmtTabComPart.createStatement(SQL_GET_SYS_TABCOMPART_OBJ);
+            stmtTabComPart.bindUInt64(1, scn);
+            stmtTabComPart.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABCOMPART_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtTabComPart.createStatement(SQL_GET_SYS_TABCOMPART_USER);
+            stmtTabComPart.bindUInt64(1, scn);
+            stmtTabComPart.bindUInt64(2, scn);
+            stmtTabComPart.bindUInt32(3, user);
+        }
+
+        char tabComPartRowid[19]; stmtTabComPart.defineString(1, tabComPartRowid, sizeof(tabComPartRowid));
+        typeOBJ tabComPartObj; stmtTabComPart.defineUInt32(2, tabComPartObj);
+        typeDATAOBJ tabComPartDataObj; stmtTabComPart.defineUInt32(3, tabComPartDataObj);
+        typeOBJ tabComPartBo; stmtTabComPart.defineUInt32(4, tabComPartBo);
+
+        int64_t tabComPartRet = stmtTabComPart.executeQuery();
+        while (tabComPartRet) {
+            schema->dictSysTabComPart(tabComPartRowid, tabComPartObj, tabComPartDataObj, tabComPartBo);
+            tabComPartRet = stmtTabComPart.next();
+        }
+
+        //reading SYS.SEG$
+        DatabaseStatement stmtSeg(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_SEG_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << obj);
+            stmtSeg.createStatement(SQL_GET_SYS_SEG_OBJ);
+            stmtSeg.bindUInt64(1, scn);
+            stmtSeg.bindUInt64(2, scn);
+            stmtSeg.bindUInt32(3, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_SEG_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << scn << endl <<
+                    "PARAM4: " << user);
+            stmtSeg.createStatement(SQL_GET_SYS_SEG_USER);
+            stmtSeg.bindUInt64(1, scn);
+            stmtSeg.bindUInt64(2, scn);
+            stmtSeg.bindUInt64(3, scn);
+            stmtSeg.bindUInt32(4, user);
+        }
+
+        char segRowid[19]; stmtSeg.defineString(1, segRowid, sizeof(segRowid));
+        uint32_t segFile; stmtSeg.defineUInt32(2, segFile);
+        uint32_t segBlock; stmtSeg.defineUInt32(3, segBlock);
+        uint32_t segTs; stmtSeg.defineUInt32(4, segTs);
+        uint64_t segSpare1; stmtSeg.defineUInt64(5, segSpare1);
+
+        int64_t segRet = stmtSeg.executeQuery();
+        while (segRet) {
+            schema->dictSysSeg(segRowid, segFile, segBlock, segTs, segSpare1);
+            segRet = stmtSeg.next();
+        }
+
+        //reading SYS.TABPART$
+        DatabaseStatement stmtTabPart(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABPART_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << obj);
+            stmtTabPart.createStatement(SQL_GET_SYS_TABPART_OBJ);
+            stmtTabPart.bindUInt64(1, scn);
+            stmtTabPart.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABPART_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtTabPart.createStatement(SQL_GET_SYS_TABPART_USER);
+            stmtTabPart.bindUInt64(1, scn);
+            stmtTabPart.bindUInt64(2, scn);
+            stmtTabPart.bindUInt32(3, user);
+        }
+
+        char tabPartRowid[19]; stmtTabPart.defineString(1, tabPartRowid, sizeof(tabPartRowid));
+        typeOBJ tabPartObj; stmtTabPart.defineUInt32(2, tabPartObj);
+        typeDATAOBJ tabPartDataObj; stmtTabPart.defineUInt32(3, tabPartDataObj);
+        typeOBJ tabPartBo; stmtTabPart.defineUInt32(4, tabPartBo);
+
+        int64_t tabPartRet = stmtTabPart.executeQuery();
+        while (tabPartRet) {
+            schema->dictSysTabPart(tabPartRowid, tabPartObj, tabPartDataObj, tabPartBo);
+            tabPartRet = stmtTabPart.next();
+        }
+
+        //reading SYS.TABSUBPART$
+        DatabaseStatement stmtTabSubPart(conn);
+        if (obj != 0) {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABSUBPART_OBJ << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << obj);
+            stmtTabSubPart.createStatement(SQL_GET_SYS_TABSUBPART_OBJ);
+            stmtTabSubPart.bindUInt64(1, scn);
+            stmtTabSubPart.bindUInt32(2, obj);
+        } else {
+            TRACE_(TRACE2_SQL, SQL_GET_SYS_TABSUBPART_USER << endl <<
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << scn << endl <<
+                    "PARAM3: " << user);
+            stmtTabSubPart.createStatement(SQL_GET_SYS_TABSUBPART_USER);
+            stmtTabSubPart.bindUInt64(1, scn);
+            stmtTabSubPart.bindUInt64(2, scn);
+            stmtTabSubPart.bindUInt32(3, user);
+        }
+
+        char tabSubPartRowid[19]; stmtTabSubPart.defineString(1, tabSubPartRowid, sizeof(tabSubPartRowid));
+        typeOBJ tabSubPartObj; stmtTabSubPart.defineUInt32(2, tabSubPartObj);
+        typeDATAOBJ tabSubPartDataObj; stmtTabSubPart.defineUInt32(3, tabSubPartDataObj);
+        typeOBJ tabSubPartPobj; stmtTabSubPart.defineUInt32(4, tabSubPartPobj);
+
+        int64_t tabSubPartRet = stmtTabSubPart.executeQuery();
+        while (tabSubPartRet) {
+            schema->dictSysTabSubPart(tabSubPartRowid, tabSubPartObj, tabSubPartDataObj, tabSubPartPobj);
+            tabSubPartRet = stmtTabSubPart.next();
+        }
+    }
+
+    void OracleAnalyzerOnline::readSystemDictionaries(string maskSchema, string maskObj, bool trackDDL) {
+        if (maskObj.length() == 0) {
+            FULL_("reading dictionaries for " << maskSchema << ".%");
+        } else {
+            FULL_("reading dictionaries for " << maskSchema << "." << maskObj);
+        }
 
         try {
             DatabaseStatement stmtUser(conn);
 
             //reading SYS.USER$
             TRACE_(TRACE2_SQL, SQL_GET_SYS_USER << endl <<
-                    "PARAM1: " << scn <<
-                    "PARAM2: " << schemaMask);
+                    "PARAM1: " << scn << endl <<
+                    "PARAM2: " << maskSchema);
             stmtUser.createStatement(SQL_GET_SYS_USER);
             stmtUser.bindUInt64(1, scn);
-            stmtUser.bindString(2, schemaMask);
+            stmtUser.bindString(2, maskSchema);
             char userRowid[19]; stmtUser.defineString(1, userRowid, sizeof(userRowid));
-            uint64_t userUser; stmtUser.defineUInt64(2, userUser);
+            typeUSER userUser; stmtUser.defineUInt32(2, userUser);
             char userName[129]; stmtUser.defineString(3, userName, sizeof(userName));
             uint64_t userSpare1; stmtUser.defineUInt64(4, userSpare1);
 
             int64_t retUser = stmtUser.executeQuery();
             while (retUser) {
-                if (schema->sysUserMap[userUser] != nullptr) {
+                if (!schema->dictSysUserAdd(userRowid, userUser, userName, userSpare1)) {
                     retUser = stmtUser.next();
                     continue;
                 }
 
-                SysUser *sysUser = new SysUser();
-                sysUser->rowid = userRowid;
-                sysUser->user = userUser;
-                sysUser->name = userName;
-                sysUser->spare1 = userSpare1;
-                schema->sysUserMap[userUser] = sysUser;
-
-                uint64_t objVals = 0;
-                {
-                    DatabaseStatement stmtObj(conn);
-                    //reading SYS.OBJ$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_OBJ << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << user);
-                    stmtObj.createStatement(SQL_GET_SYS_OBJ);
+                DatabaseStatement stmtObj(conn);
+                //reading SYS.OBJ$
+                if (trackDDL) {
+                    TRACE_(TRACE2_SQL, SQL_GET_SYS_OBJ_USER << endl <<
+                            "PARAM1: " << scn << endl <<
+                            "PARAM2: " << userUser);
+                    stmtObj.createStatement(SQL_GET_SYS_OBJ_USER);
                     stmtObj.bindUInt64(1, scn);
-                    stmtObj.bindUInt64(2, userUser);
-
-                    char objRowid[19]; stmtObj.defineString(1, objRowid, sizeof(objRowid));
-                    typeobj objObjn; stmtObj.defineUInt32(2, objObjn);
-                    typeobj objObjd; stmtObj.defineUInt32(3, objObjd);
-                    char objName[129]; stmtObj.defineString(4, objName, sizeof(objName));
-                    uint64_t objType; stmtObj.defineUInt64(5, objType);
-                    uint64_t objFlags; stmtObj.defineUInt64(6, objFlags);
-
-                    int64_t objRet = stmtObj.executeQuery();
-                    while (objRet) {
-                        SysObj *sysObj = new SysObj();
-                        sysObj->rowid = objRowid;
-                        sysObj->objn = objObjn;
-                        sysObj->objd = objObjd;
-                        sysObj->name = objName;
-                        sysObj->type = objType;
-                        sysObj->flags = objFlags;
-                        schema->sysObjMap[objObjn] = sysObj;
-
-                        ++objVals;
-                        objRet = stmtObj.next();
-                    }
+                    stmtObj.bindUInt32(2, userUser);
+                } else {
+                    TRACE_(TRACE2_SQL, SQL_GET_SYS_OBJ_NAME << endl <<
+                            "PARAM1: " << scn << endl <<
+                            "PARAM2: " << userUser << endl <<
+                            "PARAM3: " << maskObj);
+                    stmtObj.createStatement(SQL_GET_SYS_OBJ_NAME);
+                    stmtObj.bindUInt64(1, scn);
+                    stmtObj.bindUInt32(2, userUser);
+                    stmtObj.bindString(3, maskObj);
                 }
 
-                uint64_t colVals = 0;
-                {
-                    DatabaseStatement stmtCol(conn);
-                    //reading SYS.COL$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_COL << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << scn <<
-                            "PARAM3: " << user);
-                    stmtCol.createStatement(SQL_GET_SYS_COL);
-                    stmtCol.bindUInt64(1, scn);
-                    stmtCol.bindUInt64(2, scn);
-                    stmtCol.bindUInt64(3, userUser);
+                char objRowid[19]; stmtObj.defineString(1, objRowid, sizeof(objRowid));
+                typeUSER objOwner; stmtObj.defineUInt32(2, objOwner);
+                typeOBJ objObj; stmtObj.defineUInt32(3, objObj);
+                typeDATAOBJ objDataObj; stmtObj.defineUInt32(4, objDataObj);
+                char objName[129]; stmtObj.defineString(5, objName, sizeof(objName));
+                uint64_t objType; stmtObj.defineUInt64(6, objType);
+                uint64_t objFlags; stmtObj.defineUInt64(7, objFlags);
 
-                    char colRowid[19]; stmtCol.defineString(1, colRowid, sizeof(colRowid));
-                    typecol colCol; stmtCol.defineInt64(2, colCol);
-                    typecol colSegCol; stmtCol.defineInt64(3, colSegCol);
-                    typecol colIntCol; stmtCol.defineInt64(4, colIntCol);
-                    char colName[129]; stmtCol.defineString(5, colName, sizeof(colName));
-                    uint64_t colType; stmtCol.defineUInt64(6, colType);
-                    uint64_t colLength; stmtCol.defineUInt64(7, colLength);
-                    int64_t colPrecision; stmtCol.defineInt64(8, colPrecision);
-                    int64_t colScale; stmtCol.defineInt64(9, colScale);
-                    uint64_t colCharsetForm; stmtCol.defineUInt64(10, colCharsetForm);
-                    uint64_t colCharsetId; stmtCol.defineUInt64(11, colCharsetId);
-                    int64_t colNull; stmtCol.defineInt64(12, colNull);
-                    uint64_t colProperty1; stmtCol.defineUInt64(13, colProperty1);
-                    uint64_t colProperty2; stmtCol.defineUInt64(14, colProperty2);
-
-                    int64_t colRet = stmtCol.executeQuery();
-                    while (colRet) {
-                        SysCol *sysCol = new SysCol();
-                        sysCol->rowid = colRowid;
-                        sysCol->col = colCol;
-                        sysCol->segCol = colSegCol;
-                        sysCol->intCol = colIntCol;
-                        sysCol->name = colName;
-                        sysCol->type = colType;
-                        sysCol->length = colLength;
-                        sysCol->precision = colPrecision;
-                        sysCol->scale = colScale;
-                        sysCol->charsetForm = colCharsetForm;
-                        sysCol->charsetId = colCharsetId;
-                        sysCol->null = colNull;
-                        sysCol->property.set(colProperty1, colProperty2);
-                        schema->sysColMap[(((uint64_t)colCol) << 32) | colIntCol] = sysCol;
-
-                        ++colVals;
-                        colRet = stmtCol.next();
+                int64_t objRet = stmtObj.executeQuery();
+                while (objRet) {
+                    if (schema->dictSysObjAdd(objRowid, objOwner, objObj, objDataObj, objType, objName, objFlags)) {
+                        if (!trackDDL)
+                            readSystemDictionariesDetails(userUser, objObj);
                     }
+                    objRet = stmtObj.next();
                 }
 
-                uint64_t ccolVals = 0;
-                {
-                    DatabaseStatement stmtCCol(conn);
-                    //reading SYS.CCOL$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_CCOL << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << scn <<
-                            "PARAM3: " << user);
-                    stmtCCol.createStatement(SQL_GET_SYS_CCOL);
-                    stmtCCol.bindUInt64(1, scn);
-                    stmtCCol.bindUInt64(2, scn);
-                    stmtCCol.bindUInt64(3, userUser);
+                if (trackDDL)
+                    readSystemDictionariesDetails(userUser, 0);
 
-                    char ccolRowid[19]; stmtCCol.defineString(1, ccolRowid, sizeof(ccolRowid));
-                    typecol ccolCon; stmtCCol.defineInt64(2, ccolCon);
-                    typecol ccolIntCol; stmtCCol.defineInt64(3, ccolIntCol);
-                    typeobj ccolObjn; stmtCCol.defineUInt32(4, ccolObjn);
-                    uint64_t ccolSpare1; stmtCCol.defineUInt64(5, ccolSpare1);
-
-                    int64_t ccolRet = stmtCCol.executeQuery();
-                    while (ccolRet) {
-                        SysCCol *sysCCol = new SysCCol();
-                        sysCCol->rowid = ccolRowid;
-                        sysCCol->con = ccolCon;
-                        sysCCol->intCol = ccolIntCol;
-                        sysCCol->objn = ccolObjn;
-                        sysCCol->spare1 = ccolSpare1;
-                        schema->sysCColMap[(((uint64_t)ccolCon) << 32) | ccolIntCol] = sysCCol;
-
-                        ++ccolVals;
-                        ccolRet = stmtCCol.next();
-                    }
-                }
-
-                uint64_t cdefVals = 0;
-                {
-                    DatabaseStatement stmtCDef(conn);
-                    //reading SYS.CDEF$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_CDEF << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << scn <<
-                            "PARAM3: " << user);
-                    stmtCDef.createStatement(SQL_GET_SYS_CDEF);
-                    stmtCDef.bindUInt64(1, scn);
-                    stmtCDef.bindUInt64(2, scn);
-                    stmtCDef.bindUInt64(3, userUser);
-
-                    char cdefRowid[19]; stmtCDef.defineString(1, cdefRowid, sizeof(cdefRowid));
-                    typecol cdefCon; stmtCDef.defineInt64(2, cdefCon);
-                    typeobj cdefObjn; stmtCDef.defineUInt32(3, cdefObjn);
-                    uint64_t cdefType; stmtCDef.defineUInt64(4, cdefType);
-
-                    int64_t cdefRet = stmtCDef.executeQuery();
-                    while (cdefRet) {
-                        SysCDef *sysCDef = new SysCDef();
-                        sysCDef->rowid = cdefRowid;
-                        sysCDef->con = cdefCon;
-                        sysCDef->objn = cdefObjn;
-                        sysCDef->type = cdefType;
-                        schema->sysCDefMap[cdefCon] = sysCDef;
-
-                        ++cdefVals;
-                        cdefRet = stmtCDef.next();
-                    }
-                }
-
-                uint64_t ecolVals = 0;
-                {
-                    DatabaseStatement stmtECol(conn);
-                    //reading SYS.ECOL$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_ECOL << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << scn <<
-                            "PARAM3: " << user);
-                    stmtECol.createStatement(SQL_GET_SYS_ECOL);
-                    stmtECol.bindUInt64(1, scn);
-                    stmtECol.bindUInt64(2, scn);
-                    stmtECol.bindUInt64(3, userUser);
-
-                    char ecolRowid[19]; stmtECol.defineString(1, ecolRowid, sizeof(ecolRowid));
-                    typeobj ecolObjn; stmtECol.defineUInt32(2, ecolObjn);
-                    uint32_t ecolColNum; stmtECol.defineUInt32(3, ecolColNum);
-                    uint32_t ecolGuardId; stmtECol.defineUInt32(4, ecolGuardId);
-
-                    int64_t ecolRet = stmtECol.executeQuery();
-                    while (ecolRet) {
-                        SysECol *sysECol = new SysECol();
-                        sysECol->rowid = ecolRowid;
-                        sysECol->objn = ecolObjn;
-                        sysECol->colNum = ecolColNum;
-                        sysECol->guardId = ecolGuardId;
-                        schema->sysEColMap[(((uint64_t)ecolObjn) << 32) | ecolColNum] = sysECol;
-
-                        ++ecolVals;
-                        ecolRet = stmtECol.next();
-                    }
-                }
-
-                uint64_t tabVals = 0;
-                {
-                    DatabaseStatement stmtTab(conn);
-                    //reading SYS.TAB$
-                    TRACE_(TRACE2_SQL, SQL_GET_SYS_TAB << endl <<
-                            "PARAM1: " << scn <<
-                            "PARAM2: " << scn <<
-                            "PARAM3: " << user);
-                    stmtTab.createStatement(SQL_GET_SYS_TAB);
-                    stmtTab.bindUInt64(1, scn);
-                    stmtTab.bindUInt64(2, scn);
-                    stmtTab.bindUInt64(3, userUser);
-
-                    char tabRowid[19]; stmtTab.defineString(1, tabRowid, sizeof(tabRowid));
-                    typeobj tabObjn; stmtTab.defineUInt32(2, tabObjn);
-                    typeobj tabObjd; stmtTab.defineUInt32(3, tabObjd);
-                    uint32_t tabTs; stmtTab.defineUInt32(4, tabTs);
-                    uint32_t tabFile; stmtTab.defineUInt32(5, tabFile);
-                    uint32_t tabBlock; stmtTab.defineUInt32(6, tabBlock);
-                    uint64_t tabCluCols; stmtTab.defineUInt64(7, tabCluCols);
-                    uint64_t tabFlags; stmtTab.defineUInt64(8, tabFlags);
-                    uint64_t tabProperty1; stmtTab.defineUInt64(9, tabProperty1);
-                    uint64_t tabProperty2; stmtTab.defineUInt64(10, tabProperty2);
-
-                    int64_t tabRet = stmtTab.executeQuery();
-                    while (tabRet) {
-                        SysTab *sysTab = new SysTab();
-                        sysTab->rowid = tabRowid;
-                        sysTab->objn = tabObjn;
-                        sysTab->objd = tabObjd;
-                        sysTab->ts = tabTs;
-                        sysTab->file = tabFile;
-                        sysTab->block = tabBlock;
-                        sysTab->cluCols = tabCluCols;
-                        sysTab->flags = tabFlags;
-                        sysTab->ts = tabTs;
-                        sysTab->property.set(tabProperty1, tabProperty2);
-                        //todo
-
-                        ++tabVals;
-                        tabRet = stmtTab.next();
-                    }
-                }
-
-                INFO_("- reading full schema for user " << userName <<
-                        ": (obj:" << dec << objVals <<
-                        ", tab:" << dec << tabVals <<
-                        ", col:" << dec << colVals <<
-                        ", ccol: " << dec << ccolVals <<
-                        ", cdef: " << dec << cdefVals <<
-                        ", ecol: " << dec << ecolVals << ")");
                 retUser = stmtUser.next();
             }
         } catch (RuntimeException &ex) {
@@ -1065,7 +1369,7 @@ namespace OpenLogReplicator {
         if (pos == string::npos) {
             RUNTIME_FAIL("mask " << mask << " is missing \".\" character");
         }
-        addSchema(mask.substr(0, pos));
+        readSystemDictionaries(mask.substr(0, pos), "", true);
         INFO_("- reading table schema for: " << mask);
 
         uint64_t tabCnt = 0;
@@ -1074,8 +1378,8 @@ namespace OpenLogReplicator {
         TRACE_(TRACE2_SQL, SQL_GET_TABLE_LIST << endl <<
                 "PARAM1: " << mask);
         stmt.createStatement(SQL_GET_TABLE_LIST);
-        typeobj objd; stmt.defineUInt32(1, objd);
-        typeobj objn; stmt.defineUInt32(2, objn);
+        typeDATAOBJ dataObj; stmt.defineUInt32(1, dataObj);
+        typeOBJ obj; stmt.defineUInt32(2, obj);
         uint64_t cluCols; stmt.defineUInt64(3, cluCols);
         char owner[129]; stmt.defineString(4, owner, sizeof(owner));
         char name[129]; stmt.defineString(5, name, sizeof(name));
@@ -1092,15 +1396,15 @@ namespace OpenLogReplicator {
 
         if (version12) {
             TRACE_(TRACE2_SQL, SQL_GET_COLUMN_LIST << endl <<
-                    "PARAM1: " << dec << objn);
+                    "PARAM1: " << dec << obj);
             stmtCol.createStatement(SQL_GET_COLUMN_LIST);
         } else {
             TRACE_(TRACE2_SQL, SQL_GET_COLUMN_LIST11 << endl <<
-                    "PARAM1: " << dec << objn);
+                    "PARAM1: " << dec << obj);
             stmtCol.createStatement(SQL_GET_COLUMN_LIST11);
         }
-        typecol colNo; stmtCol.defineInt64(1, colNo);
-        typecol segColNo; stmtCol.defineInt64(2, segColNo);
+        typeCOL colNo; stmtCol.defineInt16(1, colNo);
+        typeCOL segColNo; stmtCol.defineInt16(2, segColNo);
         char columnName[129]; stmtCol.defineString(3, columnName, sizeof(columnName));
         uint64_t typeNo; stmtCol.defineUInt64(4, typeNo);
         uint64_t length; stmtCol.defineUInt64(5, length);
@@ -1114,72 +1418,72 @@ namespace OpenLogReplicator {
         int64_t constraint; stmtCol.defineInt64(13, constraint);
         int64_t added; stmtCol.defineInt64(14, added);
         int64_t guard; stmtCol.defineInt64(15, guard);
-        typecol guardSegNo; stmtCol.defineInt64(16, guardSegNo);
+        typeCOL guardSegNo; stmtCol.defineInt16(16, guardSegNo);
         uint64_t numPk; stmtCol.defineUInt64(17, numPk);
         uint64_t numSup; stmtCol.defineUInt64(18, numSup);
-        stmtCol.bindUInt32(1, objn);
+        stmtCol.bindUInt32(1, obj);
 
         TRACE_(TRACE2_SQL, SQL_GET_PARTITION_LIST << endl <<
-                "PARAM1: " << dec << objn << endl <<
-                "PARAM2: " << dec << objn);
+                "PARAM1: " << dec << obj << endl <<
+                "PARAM2: " << dec << obj);
         stmtPart.createStatement(SQL_GET_PARTITION_LIST);
-        typeobj partitionObjn; stmtPart.defineUInt32(1, partitionObjn);
-        typeobj partitionObjd; stmtPart.defineUInt32(2, partitionObjd);
-        stmtPart.bindUInt32(1, objn);
-        stmtPart.bindUInt32(2, objn);
+        typeOBJ partitionObj; stmtPart.defineUInt32(1, partitionObj);
+        typeDATAOBJ partitionDataObj; stmtPart.defineUInt32(2, partitionDataObj);
+        stmtPart.bindUInt32(1, obj);
+        stmtPart.bindUInt32(2, obj);
 
         TRACE_(TRACE2_SQL, SQL_GET_SUPPLEMNTAL_LOG_TABLE << endl <<
-                "PARAM1: " << dec << objn);
+                "PARAM1: " << dec << obj);
         stmtSupp.createStatement(SQL_GET_SUPPLEMNTAL_LOG_TABLE);
         uint64_t typeNo2; stmtSupp.defineUInt64(1, typeNo2);
-        stmtSupp.bindUInt32(1, objn);
+        stmtSupp.bindUInt32(1, obj);
 
         stmt.bindString(1, mask.c_str());
         cluCols = 0;
-        objd = 0;
+        dataObj = 0;
         int64_t ret = stmt.executeQuery();
 
         while (ret) {
             //skip Index Organized Tables (IOT)
             if (iot) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJN: " << dec << objn << ") - IOT");
+                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - IOT");
                 cluCols = 0;
-                objd = 0;
+                dataObj = 0;
                 ret = stmt.next();
                 continue;
             }
 
             //skip temporary tables
             if (temporary) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJN: " << dec << objn << ") - temporary table");
+                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - temporary table");
                 cluCols = 0;
-                objd = 0;
+                dataObj = 0;
                 ret = stmt.next();
                 continue;
             }
 
             //skip nested tables
             if (nested) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJN: " << dec << objn << ") - nested table");
+                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - nested table");
                 cluCols = 0;
-                objd = 0;
+                dataObj = 0;
                 ret = stmt.next();
                 continue;
             }
 
             //skip compressed tables
             if (compressed) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJN: " << dec << objn << ") - compressed table");
-                objd = 0;
+                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - compressed table");
+                dataObj = 0;
                 cluCols = 0;
                 ret = stmt.next();
                 continue;
             }
 
             //table already added with another rule
-            if (schema->checkDict(objn, objd) != nullptr) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJN: " << dec << objn << ") - already added");
-                objd = 0;
+            if (schema->checkDict(obj, dataObj) != nullptr) {
+                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - already added");
+                dataObj = 0;
                 cluCols = 0;
                 ret = stmt.next();
                 continue;
@@ -1188,7 +1492,7 @@ namespace OpenLogReplicator {
             uint64_t totalPk = 0, maxSegCol = 0, keysCnt = 0;
             bool suppLogTablePrimary = false, suppLogTableAll = false, supLogColMissing = false;
 
-            schema->object = new OracleObject(objn, objd, cluCols, options, owner, name);
+            schema->object = new OracleObject(obj, dataObj, cluCols, options, owner, name);
             if (schema->object == nullptr) {
                 RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleObject) << " bytes memory (for: object creation)");
             }
@@ -1198,7 +1502,7 @@ namespace OpenLogReplicator {
                 int64_t ret2 = stmtPart.executeQuery();
 
                 while (ret2) {
-                    schema->object->addPartition(partitionObjn, partitionObjd);
+                    schema->object->addPartition(partitionObj, partitionDataObj);
                     ret2 = stmtPart.next();
                 }
             }
@@ -1280,7 +1584,7 @@ namespace OpenLogReplicator {
             }
 
             stringstream ss;
-            ss << "  * found: " << owner << "." << name << " (OBJD: " << dec << objd << ", OBJN: " << dec << objn << ")";
+            ss << "  * found: " << owner << "." << name << " (DATAOBJ: " << dec << dataObj << ", OBJ: " << dec << obj << ")";
             if (clustered)
                 ss << ", part of cluster";
             if (partitioned)
@@ -1302,7 +1606,7 @@ namespace OpenLogReplicator {
                 //user defined primary key
                 } else {
                     if (!suppLogTableAll && !suppLogSchemaAll && !suppLogDbAll && supLogColMissing)
-                        ss << " - supplemental log missing, try: ALTER TABLE " << owner << "." << name << " ADD SUPPLEMENTAL LOG GROUP GRP" << dec << objn << " (" << keysStr << ") ALWAYS;";
+                        ss << " - supplemental log missing, try: ALTER TABLE " << owner << "." << name << " ADD SUPPLEMENTAL LOG GROUP GRP" << dec << obj << " (" << keysStr << ") ALWAYS;";
                 }
             }
             INFO_(ss.str());
@@ -1313,7 +1617,7 @@ namespace OpenLogReplicator {
             schema->addToDict(schema->object);
             schema->object = nullptr;
 
-            objd = 0;
+            dataObj = 0;
             cluCols = 0;
             ret = stmt.next();
         }

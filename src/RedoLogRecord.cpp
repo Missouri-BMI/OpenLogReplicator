@@ -66,16 +66,16 @@ namespace OpenLogReplicator {
                 " conId: " << dec << redo.conId <<
                 " flgRecord: " << dec << redo.flgRecord <<
 //                " vectorNo: " << dec << vectorNo <<
-                " robjn: " << dec << redo.recordObjn <<
-                " robjd: " << dec << redo.recordObjd <<
+                " robj: " << dec << redo.recordObj <<
+                " rdataObj: " << dec << redo.recordDataObj <<
 //                " scn: " << PRINTSCN64(scn) <<
                 " nrow: " << dec << (uint64_t)redo.nrow <<
                 " afn: " << dec << redo.afn <<
                 " length: " << dec << redo.length <<
                 " dba: 0x" << hex << redo.dba <<
                 " bdba: 0x" << hex << redo.bdba <<
-                " objn: " << dec << redo.objn <<
-                " objd: " << dec << redo.objd <<
+                " obj: " << dec << redo.obj <<
+                " dataObj: " << dec << redo.dataObj <<
                 " tsn: " << dec << redo.tsn <<
                 " undo: " << dec << redo.undo <<
                 " usn: " << dec << redo.usn <<

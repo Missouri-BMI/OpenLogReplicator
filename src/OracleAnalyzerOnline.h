@@ -49,13 +49,29 @@ namespace OpenLogReplicator {
         static const char* SQL_GET_SUPPLEMNTAL_LOG_TABLE;
         static const char* SQL_GET_PARAMETER;
         static const char* SQL_GET_PROPERTY;
-        static const char* SQL_GET_SYS_CCOL;
-        static const char* SQL_GET_SYS_CDEF;
-        static const char* SQL_GET_SYS_COL;
-        static const char* SQL_GET_SYS_ECOL;
-        static const char* SQL_GET_SYS_OBJ;
+        static const char* SQL_GET_SYS_CCOL_USER;
+        static const char* SQL_GET_SYS_CCOL_OBJ;
+        static const char* SQL_GET_SYS_CDEF_USER;
+        static const char* SQL_GET_SYS_CDEF_OBJ;
+        static const char* SQL_GET_SYS_COL_USER;
+        static const char* SQL_GET_SYS_COL_OBJ;
+        static const char* SQL_GET_SYS_DEFERRED_STG_USER;
+        static const char* SQL_GET_SYS_DEFERRED_STG_OBJ;
+        static const char* SQL_GET_SYS_ECOL_USER;
+        static const char* SQL_GET_SYS_ECOL_OBJ;
+        static const char* SQL_GET_SYS_OBJ_USER;
+        static const char* SQL_GET_SYS_OBJ_NAME;
+        static const char* SQL_GET_SYS_SEG_USER;
+        static const char* SQL_GET_SYS_SEG_OBJ;
+        static const char* SQL_GET_SYS_TAB_USER;
+        static const char* SQL_GET_SYS_TAB_OBJ;
+        static const char* SQL_GET_SYS_TABCOMPART_USER;
+        static const char* SQL_GET_SYS_TABCOMPART_OBJ;
+        static const char* SQL_GET_SYS_TABPART_USER;
+        static const char* SQL_GET_SYS_TABPART_OBJ;
+        static const char* SQL_GET_SYS_TABSUBPART_USER;
+        static const char* SQL_GET_SYS_TABSUBPART_OBJ;
         static const char* SQL_GET_SYS_USER;
-        static const char* SQL_GET_SYS_TAB;
 
         bool isStandby;
         string user;
@@ -72,7 +88,8 @@ namespace OpenLogReplicator {
         void checkTableForGrantsFlashback(string tableName, typescn scn);
         virtual const char* getModeName(void);
         virtual void refreshSchema(void);
-        void addSchema(string schemaMask);
+        void readSystemDictionariesDetails(typeUSER user, typeOBJ obj);
+        void readSystemDictionaries(string maskSchema, string maskObj, bool trackDDL);
         void addTable(string &mask, vector<string> &keys, string &keysStr, uint64_t options);
 
     public:
