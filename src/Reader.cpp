@@ -80,7 +80,7 @@ namespace OpenLogReplicator {
         }
 
         typeblk blockNumberHeader = oracleAnalyzer->read32(buffer + 4);
-        typeseq sequenceHeader = oracleAnalyzer->read32(buffer + 8);
+        typeSEQ sequenceHeader = oracleAnalyzer->read32(buffer + 8);
 
         if (sequence == 0 || status == READER_STATUS_UPDATE) {
             sequence = sequenceHeader;

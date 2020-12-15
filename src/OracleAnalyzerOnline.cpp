@@ -586,7 +586,7 @@ namespace OpenLogReplicator {
 
         typeresetlogs currentResetlogs;
         typeactivation currentActivation;
-        typescn currentScn;
+        typeSCN currentScn;
 
         if ((disableChecks & DISABLE_CHECK_GRANTS) == 0) {
             checkTableForGrants("SYS.V_$ARCHIVED_LOG");
@@ -912,7 +912,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OracleAnalyzerOnline::checkTableForGrantsFlashback(string tableName, typescn scn) {
+    void OracleAnalyzerOnline::checkTableForGrantsFlashback(string tableName, typeSCN scn) {
         try {
             string query("SELECT 1 FROM " + tableName + " AS OF SCN " + to_string(scn) + " WHERE 0 = 1");
 
@@ -1639,9 +1639,9 @@ namespace OpenLogReplicator {
         stmt.bindUInt32(3, oracleAnalyzer->activation);
 
         char path[513]; stmt.defineString(1, path, sizeof(path));
-        typeseq sequence; stmt.defineUInt32(2, sequence);
-        typescn firstScn; stmt.defineUInt64(3, firstScn);
-        typescn nextScn; stmt.defineUInt64(4, nextScn);
+        typeSEQ sequence; stmt.defineUInt32(2, sequence);
+        typeSCN firstScn; stmt.defineUInt64(3, firstScn);
+        typeSCN nextScn; stmt.defineUInt64(4, nextScn);
         int64_t ret = stmt.executeQuery();
 
         while (ret) {

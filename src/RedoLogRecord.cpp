@@ -1,4 +1,4 @@
-/* Struct used to hold in memory basic information for OpCode
+/* Structure used to hold in memory basic information for OpCode
    Copyright (C) 2018-2020 Adam Leszczynski (aleszczynski@bersler.com)
 
 This file is part of OpenLogReplicator.

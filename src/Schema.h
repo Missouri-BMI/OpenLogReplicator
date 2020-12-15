@@ -20,7 +20,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include <unordered_map>
 #include <vector>
 
-#include "types.h"
+#include "RowId.h"
 
 #ifndef SCHEMA_H_
 #define SCHEMA_H_
@@ -33,14 +33,14 @@ namespace OpenLogReplicator {
     class SchemaElement;
 
     struct SysUser {
-        string rowid;
+        RowId rowId;
         typeUSER user;      //pk
         string name;
         uint64_t spare1;
     };
 
     struct SysObj {
-        string rowid;
+        RowId rowId;
         typeUSER owner;
         typeOBJ obj;       //pk
         typeDATAOBJ dataObj;
@@ -50,7 +50,7 @@ namespace OpenLogReplicator {
     };
 
     struct SysCol {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;       //pk
         typeCOL col;
         typeCOL segCol;
@@ -67,7 +67,7 @@ namespace OpenLogReplicator {
     };
 
     struct SysCCol {
-        string rowid;
+        RowId rowId;
         typeCON con;        //pk
         typeCOL intCol;     //pk
         typeOBJ obj;
@@ -75,27 +75,27 @@ namespace OpenLogReplicator {
     };
 
     struct SysCDef {
-        string rowid;
+        RowId rowId;
         typeCON con;        //pk
         typeOBJ obj;
         uint64_t type;
     };
 
     struct SysDeferredStg {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;       //pk
         uint64_t flagsStg;
     };
 
     struct SysECol {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;
         uint32_t colNum;
         uint32_t guardId;
     };
 
     struct SysSeg {
-        string rowid;
+        RowId rowId;
         uint32_t file;
         uint32_t block;
         uint32_t ts;
@@ -103,7 +103,7 @@ namespace OpenLogReplicator {
     };
 
     struct SysTab {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;       //pk
         typeDATAOBJ dataObj;
         uint32_t ts;
@@ -115,24 +115,24 @@ namespace OpenLogReplicator {
     };
 
     struct SysTabPart {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;
         typeDATAOBJ dataObj;
         typeOBJ bo;
     };
 
     struct SysTabComPart {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;
         typeDATAOBJ dataObj;
         typeOBJ bo;
     };
 
     struct SysTabSubPart {
-        string rowid;
+        RowId rowId;
         typeOBJ obj;
         typeDATAOBJ dataObj;
-        typeOBJ pobj;
+        typeOBJ pObj;
     };
 
     class Schema {
@@ -140,6 +140,19 @@ namespace OpenLogReplicator {
         stringstream& writeEscapeValue(stringstream &ss, string &str);
         unordered_map<typeOBJ, OracleObject*> objectMap;
         unordered_map<typeOBJ, OracleObject*> partitionMap;
+
+        unordered_map<RowId, SysUser*> sysUserMap;
+        unordered_map<RowId, SysObj*> sysObjMap;
+        unordered_map<RowId, SysCol*> sysColMap;
+        unordered_map<RowId, SysCCol*> sysCColMap;
+        unordered_map<RowId, SysCDef*> sysCDefMap;
+        unordered_map<RowId, SysDeferredStg*> sysDeferredStgMap;
+        unordered_map<RowId, SysECol*> sysEColMap;
+        unordered_map<RowId, SysSeg*> sysSegMap;
+        unordered_map<RowId, SysTab*> sysTabMap;
+        unordered_map<RowId, SysTabPart*> sysTabPartMap;
+        unordered_map<RowId, SysTabComPart*> sysTabComPartMap;
+        unordered_map<RowId, SysTabSubPart*> sysTabSubPartMap;
 
     public:
         OracleObject *object;
@@ -153,20 +166,20 @@ namespace OpenLogReplicator {
         OracleObject *checkDict(typeOBJ obj, typeDATAOBJ dataObj);
         void addToDict(OracleObject *object);
         SchemaElement* addElement(void);
-        bool dictSysUserAdd(const char *rowid, typeUSER user, const char *name, uint64_t spare1);
-        bool dictSysObjAdd(const char *rowid, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags);
-        bool dictSysColAdd(const char *rowid, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+        bool dictSysUserAdd(const char *rowIdStr, typeUSER user, const char *name, uint64_t spare1);
+        bool dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags);
+        bool dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
                 int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2);
-        bool dictSysCColAdd(const char *rowid, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1);
-        bool dictSysCDefAdd(const char *rowid, typeCON con, typeOBJ obj, uint64_t type);
-        bool dictSysDeferredStg(const char *rowid, typeOBJ obj, uint64_t flagsStg);
-        bool dictSysECol(const char *rowid, typeOBJ obj, uint32_t colNum, uint32_t guardId);
-        bool dictSysSeg(const char *rowid, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1);
-        bool dictSysTab(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+        bool dictSysCColAdd(const char *rowIdStr, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1);
+        bool dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, uint64_t type);
+        bool dictSysDeferredStg(const char *rowIdStr, typeOBJ obj, uint64_t flagsStg);
+        bool dictSysECol(const char *rowIdStr, typeOBJ obj, uint32_t colNum, uint32_t guardId);
+        bool dictSysSeg(const char *rowIdStr, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1);
+        bool dictSysTab(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
                 uint64_t flags, uint64_t property1, uint64_t property2);
-        bool dictSysTabPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
-        bool dictSysTabComPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
-        bool dictSysTabSubPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pobj);
+        bool dictSysTabPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
+        bool dictSysTabComPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
+        bool dictSysTabSubPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pObj);
     };
 }
 

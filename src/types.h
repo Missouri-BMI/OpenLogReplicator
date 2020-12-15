@@ -37,18 +37,18 @@ typedef uint16_t typeop1;
 typedef uint32_t typeop2;
 typedef uint16_t typeconid;
 typedef uint32_t typeblk;
-typedef uint32_t typedba;
-typedef uint16_t typeslot;
 typedef uint8_t typeslt;
 typedef uint8_t typerci;
-typedef uint32_t typeseq;
-typedef uint64_t typeuba;
-typedef uint64_t typexid;
 typedef uint32_t typeusnslt;
-typedef uint64_t typescn;
-typedef uint16_t typesubscn;
-typedef uint32_t typeseq;
 
+typedef uint64_t typeUBA;
+typedef uint32_t typeSEQ;
+typedef uint64_t typeSCN;
+typedef uint16_t typeSubSCN;
+typedef uint64_t typeXID;
+typedef uint16_t typeAFN;
+typedef uint32_t typeDBA;
+typedef uint16_t typeSLOT;
 typedef uint32_t typeOBJ;
 typedef uint32_t typeDATAOBJ;
 typedef uint64_t typeOBJ2;
@@ -60,7 +60,7 @@ typedef uint16_t typeunicode16;
 typedef uint32_t typeunicode32;
 typedef uint64_t typeunicode;
 
-#define ZERO_SCN                                ((typescn)0xFFFFFFFFFFFFFFFF)
+#define ZERO_SCN                                ((typeSCN)0xFFFFFFFFFFFFFFFF)
 #define MAX_PATH_LENGTH                         2048
 #define MAX_FIELD_LENGTH                        1048576
 #define MAX_NO_COLUMNS                          1000

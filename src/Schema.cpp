@@ -24,6 +24,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OracleColumn.h"
 #include "OracleObject.h"
 #include "Reader.h"
+#include "RowId.h"
 #include "RuntimeException.h"
 #include "Schema.h"
 #include "SchemaElement.h"
@@ -35,6 +36,7 @@ extern const Value& getJSONfieldV(string &fileName, const Value& value, const ch
 extern const Value& getJSONfieldD(string &fileName, const Document& document, const char* field);
 
 namespace OpenLogReplicator {
+
     Schema::Schema() :
             object(nullptr) {
     }
@@ -52,6 +54,81 @@ namespace OpenLogReplicator {
             delete objectTmp;
         }
         objectMap.clear();
+
+        for (auto it : sysTabSubPartMap) {
+            SysTabSubPart *sysTabSubPart = it.second;
+            delete sysTabSubPart;
+        }
+        sysTabSubPartMap.clear();
+
+        for (auto it : sysTabComPartMap) {
+            SysTabComPart *sysTabComPart = it.second;
+            delete sysTabComPart;
+        }
+        sysTabComPartMap.clear();
+
+        for (auto it : sysTabPartMap) {
+            SysTabPart *sysTabPart = it.second;
+            delete sysTabPart;
+        }
+        sysTabPartMap.clear();
+
+        for (auto it : sysTabMap) {
+            SysTab *sysTab = it.second;
+            delete sysTab;
+        }
+        sysTabMap.clear();
+
+        for (auto it : sysSegMap) {
+            SysSeg *sysSeg = it.second;
+            delete sysSeg;
+        }
+        sysSegMap.clear();
+
+        for (auto it : sysEColMap) {
+            SysECol *sysECol = it.second;
+            delete sysECol;
+        }
+        sysEColMap.clear();
+
+        for (auto it : sysDeferredStgMap) {
+            SysDeferredStg *sysDeferredStg = it.second;
+            delete sysDeferredStg;
+        }
+        sysDeferredStgMap.clear();
+
+        unordered_map<RowId, SysCol*> sysMap;
+
+
+        for (auto it : sysCDefMap) {
+            SysCDef *sysCDef = it.second;
+            delete sysCDef;
+        }
+        sysCDefMap.clear();
+
+        for (auto it : sysCColMap) {
+            SysCCol *sysCCol = it.second;
+            delete sysCCol;
+        }
+        sysCColMap.clear();
+
+        for (auto it : sysColMap) {
+            SysCol *sysCol = it.second;
+            delete sysCol;
+        }
+        sysColMap.clear();
+
+        for (auto it : sysObjMap) {
+            SysObj *sysObj = it.second;
+            delete sysObj;
+        }
+        sysObjMap.clear();
+
+        for (auto it : sysUserMap) {
+            SysUser *sysUser = it.second;
+            delete sysUser;
+        }
+        sysUserMap.clear();
 
         for (SchemaElement *element : elements) {
             delete element;
@@ -451,53 +528,204 @@ namespace OpenLogReplicator {
         return element;
     }
 
-    bool Schema::dictSysUserAdd(const char *rowid, typeUSER user, const char *name, uint64_t spare1) {
+    bool Schema::dictSysUserAdd(const char *rowIdStr, typeUSER user, const char *name, uint64_t spare1) {
+        RowId rowId(rowIdStr);
+        if (sysUserMap[rowId] != nullptr)
+            return false;
+
+        SysUser *sysUser = new SysUser();
+        sysUser->rowId = rowId;
+        sysUser->user = user;
+        sysUser->name = name;
+        sysUser->spare1 = spare1;
+        sysUserMap[rowId] = sysUser;
+
         return true;
     }
 
-    bool Schema::dictSysObjAdd(const char *rowid, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags) {
+    bool Schema::dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags) {
+        RowId rowId(rowIdStr);
+        if (sysObjMap[rowId] != nullptr)
+            return false;
+
+        SysObj *sysObj = new SysObj();
+        sysObj->rowId = rowId;
+        sysObj->owner = owner;
+        sysObj->obj = obj;
+        sysObj->dataObj = dataObj;
+        sysObj->type = type;
+        sysObj->name = name;
+        sysObj->flags = flags;
+        sysObjMap[rowId] = sysObj;
+
         return true;
     }
 
-    bool Schema::dictSysColAdd(const char *rowid, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+    bool Schema::dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
             int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2) {
+        RowId rowId(rowIdStr);
+        if (sysColMap[rowId] != nullptr)
+            return false;
+
+        SysCol *sysCol = new SysCol();
+        sysCol->rowId = rowId;
+        sysCol->obj = obj;
+        sysCol->col = col;
+        sysCol->segCol = segCol;
+        sysCol->intCol = intCol;
+        sysCol->name = name;
+        sysCol->type = type;
+        sysCol->length = length;
+        sysCol->precision = precision;
+        sysCol->scale = scale;
+        sysCol->charsetForm = charsetForm;
+        sysCol->charsetId = charsetId;
+        sysCol->null = null;
+        sysCol->property.set(property1, property2);
+        sysColMap[rowId] = sysCol;
+
         return true;
     }
 
-    bool Schema::dictSysCColAdd(const char *rowid, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1) {
+    bool Schema::dictSysCColAdd(const char *rowIdStr, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1) {
+        RowId rowId(rowIdStr);
+        if (sysCColMap[rowId] != nullptr)
+            return false;
+
+        SysCCol *sysCCol = new SysCCol();
+        sysCCol->rowId = rowId;
+        sysCCol->con = con;
+        sysCCol->intCol = intCol;
+        sysCCol->obj = obj;
+        sysCCol->spare1 = spare1;
+        sysCColMap[rowId] = sysCCol;
+
         return true;
     }
 
-    bool Schema::dictSysCDefAdd(const char *rowid, typeCON con, typeOBJ obj, uint64_t type) {
+    bool Schema::dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, uint64_t type) {
+        RowId rowId(rowIdStr);
+        if (sysCDefMap[rowId] != nullptr)
+            return false;
+
+        SysCDef *sysCDef = new SysCDef();
+        sysCDef->rowId = rowId;
+        sysCDef->con = con;
+        sysCDef->obj = obj;
+        sysCDef->type = type;
+        sysCDefMap[rowId] = sysCDef;
+
         return true;
     }
 
-    bool Schema::dictSysDeferredStg(const char *rowid, typeOBJ obj, uint64_t flagsStg) {
+    bool Schema::dictSysDeferredStg(const char *rowIdStr, typeOBJ obj, uint64_t flagsStg) {
+        RowId rowId(rowIdStr);
+        if (sysDeferredStgMap[rowId] != nullptr)
+            return false;
+
+        SysDeferredStg *sysDeferredStg = new SysDeferredStg();
+        sysDeferredStg->rowId = rowId;
+        sysDeferredStg->obj = obj;
+        sysDeferredStg->flagsStg = flagsStg;
+        sysDeferredStgMap[rowId] = sysDeferredStg;
+
         return true;
     }
 
-    bool Schema::dictSysECol(const char *rowid, typeOBJ obj, uint32_t colNum, uint32_t guardId) {
+    bool Schema::dictSysECol(const char *rowIdStr, typeOBJ obj, uint32_t colNum, uint32_t guardId) {
+        RowId rowId(rowIdStr);
+        if (sysEColMap[rowId] != nullptr)
+            return false;
+
+        SysECol *sysECol = new SysECol();
+        sysECol->rowId = rowId;
+        sysECol->obj = obj;
+        sysECol->colNum = colNum;
+        sysECol->guardId = guardId;
+        sysEColMap[rowId] = sysECol;
+
         return true;
     }
 
-    bool Schema::dictSysSeg(const char *rowid, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1) {
+    bool Schema::dictSysSeg(const char *rowIdStr, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1) {
+        RowId rowId(rowIdStr);
+        if (sysSegMap[rowId] != nullptr)
+            return false;
+
+        SysSeg *sysSeg = new SysSeg();
+        sysSeg->rowId = rowId;
+        sysSeg->file = file;
+        sysSeg->block = block;
+        sysSeg->ts = ts;
+        sysSeg->spare1 = spare1;
+        sysSegMap[rowId] = sysSeg;
+
         return true;
     }
 
-    bool Schema::dictSysTab(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+    bool Schema::dictSysTab(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
             uint64_t flags, uint64_t property1, uint64_t property2) {
+        RowId rowId(rowIdStr);
+        if (sysTabMap[rowId] != nullptr)
+            return false;
+
+        SysTab *sysTab = new SysTab();
+        sysTab->rowId = rowId;
+        sysTab->obj = obj;
+        sysTab->dataObj = dataObj;
+        sysTab->ts = ts;
+        sysTab->file = file;
+        sysTab->block = block;
+        sysTab->cluCols = cluCols;
+        sysTab->flags = flags;
+        sysTab->property.set(property1, property2);
+        sysTabMap[rowId] = sysTab;
+
         return true;
     }
 
-    bool Schema::dictSysTabPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+    bool Schema::dictSysTabPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+        RowId rowId(rowIdStr);
+        if (sysTabPartMap[rowId] != nullptr)
+            return false;
+
+        SysTabPart *sysTabPart = new SysTabPart();
+        sysTabPart->rowId = rowId;
+        sysTabPart->obj = obj;
+        sysTabPart->dataObj = dataObj;
+        sysTabPart->bo = bo;
+        sysTabPartMap[rowId] = sysTabPart;
+
         return true;
     }
 
-    bool Schema::dictSysTabComPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+    bool Schema::dictSysTabComPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo) {
+        RowId rowId(rowIdStr);
+        if (sysTabComPartMap[rowId] != nullptr)
+            return false;
+
+        SysTabComPart *sysTabComPart = new SysTabComPart();
+        sysTabComPart->rowId = rowId;
+        sysTabComPart->obj = obj;
+        sysTabComPart->dataObj = dataObj;
+        sysTabComPart->bo = bo;
+        sysTabComPartMap[rowId] = sysTabComPart;
+
         return true;
     }
 
-    bool Schema::dictSysTabSubPart(const char *rowid, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pobj) {
+    bool Schema::dictSysTabSubPart(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ pObj) {
+        RowId rowId(rowIdStr);
+        if (sysTabSubPartMap[rowId] != nullptr)
+            return false;
+
+        SysTabSubPart *sysTabSubPart = new SysTabSubPart();
+        sysTabSubPart->rowId = rowId;
+        sysTabSubPart->obj = obj;
+        sysTabSubPart->dataObj = dataObj;
+        sysTabSubPart->pObj = pObj;
+        sysTabSubPartMap[rowId] = sysTabSubPart;
+
         return true;
     }
 

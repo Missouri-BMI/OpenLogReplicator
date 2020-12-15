@@ -66,6 +66,7 @@ ReaderFilesystem.cpp \
 RedoLog.cpp \
 RedoLogException.cpp \
 RedoLogRecord.cpp \
+RowId.cpp \
 RuntimeException.cpp \
 Schema.cpp \
 SchemaElement.cpp \

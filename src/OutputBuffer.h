@@ -56,7 +56,7 @@ namespace OpenLogReplicator {
         uint64_t id;
         uint64_t queueId;
         uint64_t length;
-        typescn scn;
+        typeSCN scn;
         OracleAnalyzer *oracleAnalyzer;
         uint8_t* data;
         uint32_t dictId;
@@ -83,8 +83,8 @@ namespace OpenLogReplicator {
         unordered_map<uint16_t, const char*> timeZoneMap;
         unordered_set<OracleObject*> objects;
         typetime lastTime;
-        typescn lastScn;
-        typexid lastXid;
+        typeSCN lastScn;
+        typeXID lastXid;
         map<uint16_t, uint16_t> valuesMap;
         ColumnValue values[MAX_NO_COLUMNS][4];
         uint8_t *merges[MAX_NO_COLUMNS*4];
@@ -113,7 +113,7 @@ namespace OpenLogReplicator {
         void valueBufferAppend(uint8_t value);
         void valueBufferAppendHex(typeunicode value, uint64_t length);
         void processValue(OracleColumn *column, const uint8_t *data, uint64_t length, uint64_t typeNo, uint64_t charsetId);
-        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot) = 0;
+        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) = 0;
         virtual void appendHeader(bool first) = 0;
         virtual void appendSchema(OracleObject *object) = 0;
 
@@ -139,18 +139,18 @@ namespace OpenLogReplicator {
         void setWriter(Writer *writer);
         void setNlsCharset(string &nlsCharset, string &nlsNcharCharset);
 
-        virtual void processBegin(typescn scn, typetime time, typexid xid) = 0;
+        virtual void processBegin(typeSCN scn, typetime time, typeXID xid) = 0;
         virtual void processCommit(void) = 0;
-        virtual void processInsert(OracleObject *object, typedba bdba, typeslot slot, typexid xid) = 0;
-        virtual void processUpdate(OracleObject *object, typedba bdba, typeslot slot, typexid xid) = 0;
-        virtual void processDelete(OracleObject *object, typedba bdba, typeslot slot, typexid xid) = 0;
+        virtual void processInsert(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
+        virtual void processUpdate(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
+        virtual void processDelete(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
         virtual void processDDL(OracleObject *object, uint16_t type, uint16_t seq, const char *operation, const char *sql, uint64_t sqlLength) = 0;
         void processInsertMultiple(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
         void processDeleteMultiple(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
         void processDML(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2, uint64_t type);
         void processDDLheader(RedoLogRecord *redoLogRecord1);
-        //virtual void processCheckpoint(typescn scn, typetime time) = 0;
-        //virtual void processSwitch(typescn scn, typetime time) = 0;
+        //virtual void processCheckpoint(typeSCN scn, typetime time) = 0;
+        //virtual void processSwitch(typeSCN scn, typetime time) = 0;
     };
 }
 

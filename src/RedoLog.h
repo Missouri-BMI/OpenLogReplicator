@@ -35,8 +35,8 @@ namespace OpenLogReplicator {
     class Reader;
 
     struct LwnMember {
-        typescn scn;
-        typesubscn subScn;
+        typeSCN scn;
+        typeSubSCN subScn;
         typeblk block;
         uint64_t pos;
     };
@@ -51,7 +51,7 @@ namespace OpenLogReplicator {
         uint8_t *lwnChunks[MAX_LWN_CHUNKS];
         uint64_t lwnAllocated;
         typetime lwnTimestamp;
-        typescn lwnScn;
+        typeSCN lwnScn;
         LwnMember* lwnMembers[MAX_RECORDS_IN_LWN];
         uint64_t lwnRecords;
         uint64_t lwnStartBlock;
@@ -68,9 +68,9 @@ namespace OpenLogReplicator {
     public:
         int64_t group;
         string path;
-        typeseq sequence;
-        typescn firstScn;
-        typescn nextScn;
+        typeSEQ sequence;
+        typeSCN firstScn;
+        typeSCN nextScn;
         Reader *reader;
 
         void resetRedo(void);

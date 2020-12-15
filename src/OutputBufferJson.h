@@ -37,7 +37,7 @@ namespace OpenLogReplicator {
         virtual void columnNumber(string &columnName, uint64_t precision, uint64_t scale);
         virtual void columnRaw(string &columnName, const uint8_t *data, uint64_t length);
         virtual void columnTimestamp(string &columnName, struct tm &epochtime, uint64_t fraction, const char *tz);
-        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot);
+        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot);
         virtual void appendHeader(bool first);
         virtual void appendSchema(OracleObject *object);
 
@@ -52,11 +52,11 @@ namespace OpenLogReplicator {
                 uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat);
         virtual ~OutputBufferJson();
 
-        virtual void processBegin(typescn scn, typetime time, typexid xid);
+        virtual void processBegin(typeSCN scn, typetime time, typeXID xid);
         virtual void processCommit(void);
-        virtual void processInsert(OracleObject *object, typedba bdba, typeslot slot, typexid xid);
-        virtual void processUpdate(OracleObject *object, typedba bdba, typeslot slot, typexid xid);
-        virtual void processDelete(OracleObject *object, typedba bdba, typeslot slot, typexid xid);
+        virtual void processInsert(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
+        virtual void processUpdate(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
+        virtual void processDelete(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
         virtual void processDDL(OracleObject *object, uint16_t type, uint16_t seq, const char *operation, const char *sql, uint64_t sqlLength);
     };
 }

@@ -224,7 +224,7 @@ namespace OpenLogReplicator {
                 ((uint64_t)buf[6] << 8) | (uint64_t)buf[7];
     }
 
-    typescn OracleAnalyzer::readSCNLittle(const uint8_t* buf) {
+    typeSCN OracleAnalyzer::readSCNLittle(const uint8_t* buf) {
         if (buf[0] == 0xFF && buf[1] == 0xFF && buf[2] == 0xFF && buf[3] == 0xFF && buf[4] == 0xFF && buf[5] == 0xFF)
             return ZERO_SCN;
         if ((buf[5] & 0x80) == 0x80)
@@ -238,7 +238,7 @@ namespace OpenLogReplicator {
                 ((uint64_t)buf[4] << 32) | ((uint64_t)buf[5] << 40);
     }
 
-    typescn OracleAnalyzer::readSCNBig(const uint8_t* buf) {
+    typeSCN OracleAnalyzer::readSCNBig(const uint8_t* buf) {
         if (buf[0] == 0xFF && buf[1] == 0xFF && buf[2] == 0xFF && buf[3] == 0xFF && buf[4] == 0xFF && buf[5] == 0xFF)
             return ZERO_SCN;
         if ((buf[4] & 0x80) == 0x80)
@@ -252,7 +252,7 @@ namespace OpenLogReplicator {
                 ((uint64_t)buf[5] << 32) | ((uint64_t)buf[4] << 40);
     }
 
-    typescn OracleAnalyzer::readSCNrLittle(const uint8_t* buf) {
+    typeSCN OracleAnalyzer::readSCNrLittle(const uint8_t* buf) {
         if (buf[0] == 0xFF && buf[1] == 0xFF && buf[2] == 0xFF && buf[3] == 0xFF && buf[4] == 0xFF && buf[5] == 0xFF)
             return ZERO_SCN;
         if ((buf[1] & 0x80) == 0x80)
@@ -266,7 +266,7 @@ namespace OpenLogReplicator {
                 ((uint64_t)buf[0] << 32) | ((uint64_t)buf[1] << 40);
     }
 
-    typescn OracleAnalyzer::readSCNrBig(const uint8_t* buf) {
+    typeSCN OracleAnalyzer::readSCNrBig(const uint8_t* buf) {
         if (buf[0] == 0xFF && buf[1] == 0xFF && buf[2] == 0xFF && buf[3] == 0xFF && buf[4] == 0xFF && buf[5] == 0xFF)
             return ZERO_SCN;
         if ((buf[0] & 0x80) == 0x80)
@@ -346,7 +346,7 @@ namespace OpenLogReplicator {
         buf[7] = val & 0xFF;
     }
 
-    void OracleAnalyzer::writeSCNLittle(uint8_t* buf, typescn val) {
+    void OracleAnalyzer::writeSCNLittle(uint8_t* buf, typeSCN val) {
         if (val < 0x800000000000) {
             buf[0] = val & 0xFF;
             buf[1] = (val >> 8) & 0xFF;
@@ -366,7 +366,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OracleAnalyzer::writeSCNBig(uint8_t* buf, typescn val) {
+    void OracleAnalyzer::writeSCNBig(uint8_t* buf, typeSCN val) {
         if (val < 0x800000000000) {
             buf[5] = val & 0xFF;
             buf[4] = (val >> 8) & 0xFF;
@@ -934,7 +934,7 @@ namespace OpenLogReplicator {
         return path;
     }
 
-    void OracleAnalyzer::writeSavepoint(typescn savepointScn) {
+    void OracleAnalyzer::writeSavepoint(typeSCN savepointScn) {
         if ((flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return;
 
@@ -947,9 +947,9 @@ namespace OpenLogReplicator {
             RUNTIME_FAIL("writing savepoint data to " << fileName);
         }
 
-        typeseq minSequence = 0xFFFFFFFF;
+        typeSEQ minSequence = 0xFFFFFFFF;
         uint64_t minPos = 0;
-        typexid minXid;
+        typeXID minXid;
 
         for (auto it : xidTransactionMap) {
             Transaction *transaction = it.second;

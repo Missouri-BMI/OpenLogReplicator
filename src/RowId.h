@@ -1,4 +1,4 @@
-/* Header for WriterFile class
+/* Header for RowId class
    Copyright (C) 2018-2020 Adam Leszczynski (aleszczynski@bersler.com)
 
 This file is part of OpenLogReplicator.
@@ -17,32 +17,37 @@ You should have received a copy of the GNU General Public License
 along with OpenLogReplicator; see the file LICENSE;  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "Writer.h"
+#include <functional>
+#include "types.h"
 
-#ifndef WRITERFILE_H_
-#define WRITERFILE_H_
+#ifndef ROWID_H_
+#define ROWID_H_
 
 using namespace std;
 
 namespace OpenLogReplicator {
 
-    class RedoLogRecord;
-    class OracleAnalyzer;
-
-    class WriterFile : public Writer {
-    protected:
-        string name;
-        ostream *output;
-        bool fileOpen;
-        virtual void sendMessage(OutputBufferMsg *msg);
-        virtual string getName();
-        virtual void pollQueue(void);
-
+    class RowId {
     public:
-        WriterFile(const char *alias, OracleAnalyzer *oracleAnalyzer, const char *name, uint64_t pollInterval,
-                uint64_t checkpointInterval, uint64_t queueSize, typeSCN startScn, typeSEQ startSeq, const char* startTime,
-                uint64_t startTimeRel);
-        virtual ~WriterFile();
+        static const char map64[65];
+        static const char map64R[256];
+
+        typeDATAOBJ dataObj;
+        typeDBA dba;
+        typeSLOT slot;
+
+        RowId();
+        RowId(const char *rowid);
+        bool operator<(const RowId& other) const;
+        bool operator!=(const RowId& other) const;
+        bool operator==(const RowId& other) const;
+    };
+}
+
+namespace std {
+    template <>
+    struct hash<OpenLogReplicator::RowId> {
+        size_t operator()(const OpenLogReplicator::RowId &rowId) const;
     };
 }
 

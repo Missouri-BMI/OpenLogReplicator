@@ -33,6 +33,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OracleAnalyzerBatch.h"
 #include "OutputBuffer.h"
 #include "OutputBufferJson.h"
+#include "RowId.h"
 #include "RuntimeException.h"
 #include "Schema.h"
 #include "SchemaElement.h"
@@ -625,14 +626,14 @@ int main(int argc, char **argv) {
             }
 
             //optional
-            typescn startScn = 0;
+            typeSCN startScn = 0;
             if (writerJSON.HasMember("start-scn")) {
                 const Value& startScnJSON = writerJSON["start-scn"];
                 startScn = startScnJSON.GetUint64();
             }
 
             //optional
-            typeseq startSequence = 0;
+            typeSEQ startSequence = 0;
             if (writerJSON.HasMember("start-seq")) {
                 if (startScn > 0) {
                     CONFIG_FAIL("bad JSON, \"start-scn\" used together with \"start-seq\"");

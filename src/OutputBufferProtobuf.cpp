@@ -93,8 +93,8 @@ namespace OpenLogReplicator {
         valuePB->set_name(columnName);
     }
 
-    void OutputBufferProtobuf::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot) {
-        uint32_t afn = bdba >> 22;
+    void OutputBufferProtobuf::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
+        typeAFN afn = bdba >> 22;
         bdba &= 0x003FFFFF;
 
         char rid[18];
@@ -282,7 +282,7 @@ namespace OpenLogReplicator {
         buf[length] = 0;
     }
 
-    void OutputBufferProtobuf::processBegin(typescn scn, typetime time, typexid xid) {
+    void OutputBufferProtobuf::processBegin(typeSCN scn, typetime time, typeXID xid) {
         lastTime = time;
         lastScn = scn;
         lastXid = xid;
@@ -342,7 +342,7 @@ namespace OpenLogReplicator {
         outputBufferCommit();
     }
 
-    void OutputBufferProtobuf::processInsert(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferProtobuf::processInsert(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (redoResponsePB == nullptr) {
                 RUNTIME_FAIL("ERROR, PB insert processing failed, message missing, internal error");
@@ -400,7 +400,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferProtobuf::processUpdate(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferProtobuf::processUpdate(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (redoResponsePB == nullptr) {
                 RUNTIME_FAIL("ERROR, PB update processing failed, message missing, internal error");
@@ -479,7 +479,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferProtobuf::processDelete(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferProtobuf::processDelete(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (redoResponsePB == nullptr) {
                 RUNTIME_FAIL("ERROR, PB delete processing failed, message missing, internal error");

@@ -66,18 +66,18 @@ namespace OpenLogReplicator {
         uint8_t *redoBuffer;
         uint8_t *headerBuffer;
         int64_t group;
-        typeseq sequence;
+        typeSEQ sequence;
         vector<string> paths;
         string pathMapped;
         uint64_t blockSize;
         typeblk numBlocks;
-        typescn firstScn;
-        typescn nextScn;
+        typeSCN firstScn;
+        typeSCN nextScn;
         uint32_t compatVsn;
         typeresetlogs resetlogsRead;
         typeactivation activationRead;
-        typescn firstScnHeader;
-        typescn nextScnHeader;
+        typeSCN firstScnHeader;
+        typeSCN nextScnHeader;
 
         uint64_t fileSize;
         volatile uint64_t status;

@@ -170,7 +170,7 @@ namespace OpenLogReplicator {
                 redoLogRecord->uba = oracleAnalyzer->read56(redoLogRecord->data + fieldPos + 12);
 
                 if (oracleAnalyzer->dumpRedoLog >= 1) {
-                    typexid itlXid = XID(oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 4),
+                    typeXID itlXid = XID(oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 4),
                             oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 6),
                             oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 8));
 
@@ -186,7 +186,7 @@ namespace OpenLogReplicator {
                     if ((flag & 0x40) != 0) flagStr[1] = 'B';
                     if ((flag & 0x20) != 0) flagStr[2] = 'U';
                     if ((flag & 0x10) != 0) flagStr[3] = 'T';
-                    typescn scnx = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 26);
+                    typeSCN scnx = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 26);
 
                     if (oracleAnalyzer->version < 0x12200)
                         oracleAnalyzer->dumpStream << "                     " <<
@@ -208,7 +208,7 @@ namespace OpenLogReplicator {
                 redoLogRecord->uba = oracleAnalyzer->read56(redoLogRecord->data + fieldPos + 16);
 
                 if (oracleAnalyzer->dumpRedoLog >= 1) {
-                    typexid itlXid = XID(oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 8),
+                    typeXID itlXid = XID(oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 8),
                             oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 10),
                             oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 12));
 
@@ -224,7 +224,7 @@ namespace OpenLogReplicator {
                     if ((flag & 0x40) != 0) flagStr[1] = 'B';
                     if ((flag & 0x20) != 0) flagStr[2] = 'U';
                     if ((flag & 0x10) != 0) flagStr[3] = 'T';
-                    typescn scnx = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 26);
+                    typeSCN scnx = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 26);
 
                     if (oracleAnalyzer->version < 0x12200)
                         oracleAnalyzer->dumpStream << "                     " <<
@@ -268,7 +268,7 @@ namespace OpenLogReplicator {
         //block cleanout record
         if ((op & KTBOP_BLOCKCLEANOUT) != 0) {
             if (oracleAnalyzer->dumpRedoLog >= 1) {
-                typescn scn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 48);
+                typeSCN scn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 48);
                 uint8_t opt = redoLogRecord->data[fieldPos + 44];
                 uint8_t ver = redoLogRecord->data[fieldPos + 46];
                 uint8_t entries = redoLogRecord->data[fieldPos + 45];
@@ -305,7 +305,7 @@ namespace OpenLogReplicator {
                 for (uint64_t j = 0; j < entries; ++j) {
                     uint8_t itli = redoLogRecord->data[fieldPos + 56 + j * 8];
                     uint8_t flg = redoLogRecord->data[fieldPos + 57 + j * 8];
-                    typescn scn = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 58 + j * 8);
+                    typeSCN scn = oracleAnalyzer->readSCNr(redoLogRecord->data + fieldPos + 58 + j * 8);
                     if (oracleAnalyzer->version < 0x12100)
                         oracleAnalyzer->dumpStream << "  itli: " << dec << (uint64_t)itli << " " <<
                                 " flg: " << (uint64_t)flg << " " <<
@@ -369,8 +369,8 @@ namespace OpenLogReplicator {
                 oracleAnalyzer->dumpStream << endl;
 
             if ((redoLogRecord->fb & FB_F) != 0  && (redoLogRecord->fb & FB_H) == 0) {
-                typedba hrid1 = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 20);
-                typeslot hrid2 = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 24);
+                typeDBA hrid1 = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 20);
+                typeSLOT hrid2 = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 24);
                 oracleAnalyzer->dumpStream << "hrid: 0x" << setfill('0') << setw(8) << hex << hrid1 << "." << hex << hrid2 << endl;
             }
 
@@ -664,7 +664,7 @@ namespace OpenLogReplicator {
         redoLogRecord->itli = redoLogRecord->data[fieldPos + 12];
 
         if (oracleAnalyzer->dumpRedoLog >= 1) {
-            typedba hdba = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 4);
+            typeDBA hdba = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 4);
             uint16_t maxFr = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 8);
             uint8_t ispac = redoLogRecord->data[fieldPos + 13];
 
@@ -785,7 +785,7 @@ namespace OpenLogReplicator {
                     " objd: " << dec << redoLogRecord->dataObj <<
                     " tsn: " << dec << redoLogRecord->tsn << postObj << endl;
         } else {
-            typedba prevDba = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 12);
+            typeDBA prevDba = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 12);
             uint16_t wrp = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 22);
 
             oracleAnalyzer->dumpStream <<
@@ -935,10 +935,10 @@ namespace OpenLogReplicator {
                 if (oracleAnalyzer->dumpRedoLog >= 1) {
                     uint16_t flg2 = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 24);
                     int16_t buExtIdx = oracleAnalyzer->read16(redoLogRecord->data + fieldPos + 26);
-                    typeuba prevCtlUba = oracleAnalyzer->read56(redoLogRecord->data + fieldPos + 28);
-                    typescn prevCtlMaxCmtScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 36);
-                    typescn prevTxCmtScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 44);
-                    typescn txStartScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 56);
+                    typeUBA prevCtlUba = oracleAnalyzer->read56(redoLogRecord->data + fieldPos + 28);
+                    typeSCN prevCtlMaxCmtScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 36);
+                    typeSCN prevTxCmtScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 44);
+                    typeSCN txStartScn = oracleAnalyzer->readSCN(redoLogRecord->data + fieldPos + 56);
                     uint32_t prevBrb = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 64);
                     uint32_t prevBcl = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 68);
                     uint32_t logonUser = oracleAnalyzer->read32(redoLogRecord->data + fieldPos + 72);

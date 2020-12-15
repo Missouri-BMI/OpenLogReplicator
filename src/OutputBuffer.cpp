@@ -1502,8 +1502,8 @@ namespace OpenLogReplicator {
 
     void OutputBuffer::processDML(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2, uint64_t type) {
         uint8_t fb;
-        typedba bdba;
-        typeslot slot;
+        typeDBA bdba;
+        typeSLOT slot;
         RedoLogRecord *redoLogRecord1p, *redoLogRecord2p = nullptr;
         OracleObject *object = redoLogRecord1->object;
 

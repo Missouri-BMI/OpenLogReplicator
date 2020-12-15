@@ -167,8 +167,8 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typedba bdba, typeslot slot) {
-        uint32_t afn = bdba >> 22;
+    void OutputBufferJson::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
+        typeAFN afn = bdba >> 22;
         bdba &= 0x003FFFFF;
         outputBufferAppend("\"rid\":\"");
         outputBufferAppend(map64[(dataObj >> 30) & 0x3F]);
@@ -487,7 +487,7 @@ namespace OpenLogReplicator {
         return result;
     }
 
-    void OutputBufferJson::processBegin(typescn scn, typetime time, typexid xid) {
+    void OutputBufferJson::processBegin(typeSCN scn, typetime time, typeXID xid) {
         lastTime = time;
         lastScn = scn;
         lastXid = xid;
@@ -517,7 +517,7 @@ namespace OpenLogReplicator {
         outputBufferCommit();
     }
 
-    void OutputBufferJson::processInsert(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferJson::processInsert(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (hasPreviousRedo)
                 outputBufferAppend(',');
@@ -560,7 +560,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::processUpdate(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferJson::processUpdate(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (hasPreviousRedo)
                 outputBufferAppend(',');
@@ -622,7 +622,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::processDelete(OracleObject *object, typedba bdba, typeslot slot, typexid xid) {
+    void OutputBufferJson::processDelete(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid) {
         if (messageFormat == MESSAGE_FORMAT_FULL) {
             if (hasPreviousRedo)
                 outputBufferAppend(',');
