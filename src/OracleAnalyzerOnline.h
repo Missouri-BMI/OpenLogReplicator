@@ -59,6 +59,8 @@ namespace OpenLogReplicator {
         static const char* SQL_GET_SYS_DEFERRED_STG_OBJ;
         static const char* SQL_GET_SYS_ECOL_USER;
         static const char* SQL_GET_SYS_ECOL_OBJ;
+        static const char* SQL_GET_SYS_ECOL11_USER;
+        static const char* SQL_GET_SYS_ECOL11_OBJ;
         static const char* SQL_GET_SYS_OBJ_USER;
         static const char* SQL_GET_SYS_OBJ_NAME;
         static const char* SQL_GET_SYS_SEG_USER;

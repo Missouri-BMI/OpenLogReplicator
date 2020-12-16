@@ -134,7 +134,8 @@ typedef uint64_t typeunicode;
 #define TRACE2_TRANSACTION                      0x0000200
 #define TRACE2_REDO                             0x0000400
 #define TRACE2_ARCHIVE_LIST                     0x0000800
-#define TRACE2_KAFKA                            0x0001000
+#define TRACE2_SCHEMA_LIST                      0x0001000
+#define TRACE2_KAFKA                            0x0002000
 
 #define REDO_FLAGS_ARCH_ONLY                    0x0000001
 #define REDO_FLAGS_DIRECT                       0x0000002

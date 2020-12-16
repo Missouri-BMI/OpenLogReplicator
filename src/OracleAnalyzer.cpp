@@ -63,6 +63,7 @@ namespace OpenLogReplicator {
         waitingForWriter(false),
         context(""),
         scn(ZERO_SCN),
+        schemaScn(ZERO_SCN),
         startScn(ZERO_SCN),
         startSequence(0),
         startTimeRel(0),
@@ -427,7 +428,9 @@ namespace OpenLogReplicator {
         if (!schema->readSchema(this)) {
             refreshSchema();
             schema->writeSchema(this);
-            schema->writeSys(this, scn);
+            schema->writeSys(this);
+        } else {
+            schema->readSys(this);
         }
     }
 
