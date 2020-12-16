@@ -427,6 +427,7 @@ namespace OpenLogReplicator {
         if (!schema->readSchema(this)) {
             refreshSchema();
             schema->writeSchema(this);
+            schema->writeSys(this, scn);
         }
     }
 
@@ -1047,7 +1048,7 @@ namespace OpenLogReplicator {
         return true;
     }
 
-    const char* OracleAnalyzer::getModeName(void) {
+    const char* OracleAnalyzer::getModeName(void) const {
         return "offline";
     }
 

@@ -45,7 +45,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    string WriterStream::getName(void) {
+    string WriterStream::getName(void) const {
         return stream->getName();
     }
 

@@ -70,7 +70,7 @@ namespace OpenLogReplicator {
         confirmMessage(msg);
     }
 
-    string WriterFile::getName() {
+    string WriterFile::getName() const {
         return "File:" + name;
     }
 

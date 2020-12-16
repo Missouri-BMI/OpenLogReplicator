@@ -86,7 +86,7 @@ namespace OpenLogReplicator {
         return readerASM;
     }
 
-    const char* OracleAnalyzerOnlineASM::getModeName(void) {
+    const char* OracleAnalyzerOnlineASM::getModeName(void) const {
         return "ASM";
     }
 }

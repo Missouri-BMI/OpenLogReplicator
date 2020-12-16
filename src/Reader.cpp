@@ -321,7 +321,7 @@ namespace OpenLogReplicator {
         return ret;
     }
 
-    typesum Reader::calcChSum(uint8_t *buffer, uint64_t size) {
+    typesum Reader::calcChSum(uint8_t *buffer, uint64_t size) const {
         typesum oldChSum = oracleAnalyzer->read16(buffer + 14);
         uint64_t sum = 0;
 

@@ -472,6 +472,294 @@ namespace OpenLogReplicator {
         outfile.close();
     }
 
+    void Schema::writeSys(OracleAnalyzer *oracleAnalyzer, typeSCN scn) {
+
+        if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
+            return;
+
+        string fileName = oracleAnalyzer->savepointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(scn) + ".json";
+        ofstream outfile;
+        outfile.open(fileName.c_str(), ios::out | ios::trunc);
+
+        if (!outfile.is_open()) {
+            RUNTIME_FAIL("writing schema data");
+        }
+
+        stringstream ss;
+        ss << "{\"database\":\"" << oracleAnalyzer->database << "\"," <<
+                "\"big-endian\":" << dec << oracleAnalyzer->isBigEndian << "," <<
+                "\"resetlogs\":" << dec << oracleAnalyzer->resetlogs << "," <<
+                "\"activation\":" << dec << oracleAnalyzer->activation << "," <<
+                "\"context\":\"" << oracleAnalyzer->context << "\"," <<
+                "\"con-id\":" << dec << oracleAnalyzer->conId << "," <<
+                "\"con-name\":\"" << oracleAnalyzer->conName << "\"," <<
+                "\"db-recovery-file-dest\":\"";
+        writeEscapeValue(ss, oracleAnalyzer->dbRecoveryFileDest);
+        ss << "\"," << "\"log-archive-dest\":\"";
+        writeEscapeValue(ss, oracleAnalyzer->logArchiveDest);
+        ss << "\"," << "\"log-archive-format\":\"";
+        writeEscapeValue(ss, oracleAnalyzer->logArchiveFormat);
+        ss << "\"," << "\"nls-character-set\":\"";
+        writeEscapeValue(ss, oracleAnalyzer->nlsCharacterSet);
+        ss << "\"," << "\"nls-nchar-character-set\":\"";
+        writeEscapeValue(ss, oracleAnalyzer->nlsNcharCharacterSet);
+
+        ss << "\"," << "\"online-redo\":[";
+
+        bool hasPrev = false, hasPrev2;
+        for (Reader *reader : oracleAnalyzer->readers) {
+            if (reader->group == 0)
+                continue;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            hasPrev2 = false;
+            ss << "{\"group\":" << reader->group << ",\"path\":[";
+            for (string &path : reader->paths) {
+                if (hasPrev2)
+                    ss << ",";
+                else
+                    hasPrev2 = true;
+
+                ss << "\"";
+                writeEscapeValue(ss, path);
+                ss << "\"";
+            }
+            ss << "]}";
+        }
+
+        //SYS.USER$
+        ss << "]," << endl << "\"sys-user\":[";
+        hasPrev = false;
+        for (auto it : sysUserMap) {
+            SysUser *sysUser = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysUser->rowId << "\"," <<
+                    "\"user\":" << dec << sysUser->user << "," <<
+                    "\"name\":\"" << sysUser->name << "\"," <<
+                    "\"spare1\":" << dec << sysUser->spare1 << "}";
+        }
+
+        //SYS.OBJ$
+        ss << "]," << endl << "\"sys-obj\":[";
+        hasPrev = false;
+        for (auto it : sysObjMap) {
+            SysObj *sysObj = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysObj->rowId << "\"," <<
+                    "\"owner\":" << dec << sysObj->owner << "," <<
+                    "\"obj\":" << dec << sysObj->obj << "," <<
+                    "\"data-obj\":" << dec << sysObj->dataObj << "," <<
+                    "\"type\":" << dec << sysObj->type << "," <<
+                    "\"name\":\"" << sysObj->name << "\"," <<
+                    "\"flags\":" << dec << sysObj->flags << "}";
+        }
+
+        //SYS.COL$
+        ss << "]," << endl << "\"sys-col\":[";
+        hasPrev = false;
+        for (auto it : sysColMap) {
+            SysCol *sysCol = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysCol->rowId << "\"," <<
+                    "\"obj\":" << dec << sysCol->obj << "," <<
+                    "\"col\":" << dec << sysCol->col << "," <<
+                    "\"seg-col\":" << dec << sysCol->segCol << "," <<
+                    "\"int-col\":" << dec << sysCol->intCol << "," <<
+                    "\"name\":\"" << sysCol->name << "\"," <<
+                    "\"type\":" << dec << sysCol->type << "," <<
+                    "\"length\":" << dec << sysCol->length << "," <<
+                    "\"precision\":" << dec << sysCol->precision << "," <<
+                    "\"scale\":" << dec << sysCol->scale << "," <<
+                    "\"charsetForm\":" << dec << sysCol->charsetForm << "," <<
+                    "\"charsetId\":" << dec << sysCol->charsetId << "," <<
+                    "\"null\":" << dec << sysCol->null << "," <<
+                    "\"property\":" << sysCol->property << "}";
+        }
+
+        //SYS.CCOL$
+        ss << "]," << endl << "\"sys-ccol\":[";
+        hasPrev = false;
+        for (auto it : sysCColMap) {
+            SysCCol *sysCCol = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysCCol->rowId << "\"," <<
+                    "\"con\":" << dec << sysCCol->con << "," <<
+                    "\"int-col\":" << dec << sysCCol->intCol << "," <<
+                    "\"obj\":" << dec << sysCCol->obj << "," <<
+                    "\"spare1\":" << dec << sysCCol->spare1 << "}";
+        }
+
+        //SYS.CDEF$
+        ss << "]," << endl << "\"sys-cdef\":[";
+        hasPrev = false;
+        for (auto it : sysCDefMap) {
+            SysCDef *sysCDef = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysCDef->rowId << "\"," <<
+                    "\"con\":" << dec << sysCDef->con << "," <<
+                    "\"obj\":" << dec << sysCDef->obj << "," <<
+                    "\"type\":" << dec << sysCDef->type << "}";
+        }
+
+        //SYS.DEFERRED_STG$
+        ss << "]," << endl << "\"sys-deferredstg\":[";
+        hasPrev = false;
+        for (auto it : sysDeferredStgMap) {
+            SysDeferredStg *sysDeferredStg = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysDeferredStg->rowId << "\"," <<
+                    "\"obj\":" << dec << sysDeferredStg->obj << "," <<
+                    "\"flags-stg\":" << dec << sysDeferredStg->flagsStg << "}";
+        }
+
+        //SYS.ECOL$
+        ss << "]," << endl << "\"sys-ecol\":[";
+        hasPrev = false;
+        for (auto it : sysEColMap) {
+            SysECol *sysECol = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysECol->rowId << "\"," <<
+                    "\"obj\":" << dec << sysECol->obj << "," <<
+                    "\"col-num\":" << dec << sysECol->colNum << "," <<
+                    "\"guard-id\":" << dec << sysECol->guardId << "}";
+        }
+
+        //SYS.SEG$
+        ss << "]," << endl << "\"sys-seg\":[";
+        hasPrev = false;
+        for (auto it : sysSegMap) {
+            SysSeg *sysSeg = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysSeg->rowId << "\"," <<
+                    "\"file\":" << dec << sysSeg->file << "," <<
+                    "\"block\":" << dec << sysSeg->block << "," <<
+                    "\"ts\":" << dec << sysSeg->ts << "," <<
+                    "\"spare1\":" << dec << sysSeg->spare1 << "}";
+        }
+
+        //SYS.TAB$
+        ss << "]," << endl << "\"sys-tab\":[";
+        hasPrev = false;
+        for (auto it : sysTabMap) {
+            SysTab *sysTab = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysTab->rowId << "\"," <<
+                    "\"obj\":" << dec << sysTab->obj << "," <<
+                    "\"data-obj\":" << dec << sysTab->dataObj << "," <<
+                    "\"ts\":" << dec << sysTab->ts << "," <<
+                    "\"file\":" << dec << sysTab->file << "," <<
+                    "\"block\":" << dec << sysTab->block << "," <<
+                    "\"clu-cols\":" << dec << sysTab->cluCols << "," <<
+                    "\"flags\":" << dec << sysTab->flags << "," <<
+                    "\"property\":" << dec << sysTab->property << "}";
+        }
+
+        //SYS.TABPART$
+        ss << "]," << endl << "\"sys-tabpart\":[";
+        hasPrev = false;
+        for (auto it : sysTabPartMap) {
+            SysTabPart *sysTabPart = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysTabPart->rowId << "\"," <<
+                    "\"obj\":" << dec << sysTabPart->obj << "," <<
+                    "\"data-obj\":" << dec << sysTabPart->dataObj << "," <<
+                    "\"bo\":" << dec << sysTabPart->bo << "}";
+        }
+
+        //SYS.TABCOMPART$
+        ss << "]," << endl << "\"sys-tabcompart\":[";
+        hasPrev = false;
+        for (auto it : sysTabComPartMap) {
+            SysTabComPart *sysTabComPart = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysTabComPart->rowId << "\"," <<
+                    "\"obj\":" << dec << sysTabComPart->obj << "," <<
+                    "\"data-obj\":" << dec << sysTabComPart->dataObj << "," <<
+                    "\"bo\":" << dec << sysTabComPart->bo << "}";
+        }
+
+        //SYS.TABSUBPART$
+        ss << "]," << endl << "\"sys-tabsubpart\":[";
+        hasPrev = false;
+        for (auto it : sysTabSubPartMap) {
+            SysTabSubPart *sysTabSubPart = it.second;
+
+            if (hasPrev)
+                ss << ",";
+            else
+                hasPrev = true;
+
+            ss << "{\"row-id\":\"" << sysTabSubPart->rowId << "\"," <<
+                    "\"obj\":" << dec << sysTabSubPart->obj << "," <<
+                    "\"data-obj\":" << dec << sysTabSubPart->dataObj << "," <<
+                    "\"p-obj\":" << dec << sysTabSubPart->pObj << "}";
+        }
+
+        ss << "]}";
+        outfile << ss.rdbuf();
+
+        outfile.close();
+    }
+
     void Schema::addToDict(OracleObject *object) {
         if (objectMap[object->obj] == nullptr) {
             objectMap[object->obj] = object;

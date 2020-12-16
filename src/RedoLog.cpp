@@ -84,7 +84,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void RedoLog::printHeaderInfo(void) {
+    void RedoLog::printHeaderInfo(void) const {
 
         if (oracleAnalyzer->dumpRedoLog >= 1) {
             char SID[9];
@@ -878,7 +878,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void RedoLog::dumpRedoVector(uint8_t *data, uint64_t recordLength) {
+    void RedoLog::dumpRedoVector(uint8_t *data, uint64_t recordLength) const {
         if (oracleAnalyzer->trace >= TRACE_WARNING) {
             stringstream ss;
             ss << "WARNING: Dumping redo Vector" << endl;

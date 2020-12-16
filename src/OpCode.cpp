@@ -1032,11 +1032,11 @@ namespace OpenLogReplicator {
     }
 
 
-    const char* OpCode::getUndoType(void) {
+    const char* OpCode::getUndoType(void) const {
         return "";
     }
 
-    void OpCode::dumpColsVector(uint8_t *data, uint64_t colnum, uint16_t fieldLength) {
+    void OpCode::dumpColsVector(uint8_t *data, uint64_t colnum, uint16_t fieldLength) const {
         uint64_t pos = 0;
 
         oracleAnalyzer->dumpStream << "Vector content: " << endl;
@@ -1058,7 +1058,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OpCode::dumpCols(uint8_t *data, uint64_t colnum, uint16_t fieldLength, uint8_t isNull) {
+    void OpCode::dumpCols(uint8_t *data, uint64_t colnum, uint16_t fieldLength, uint8_t isNull) const {
         if (isNull) {
             oracleAnalyzer->dumpStream << "col " << setfill(' ') << setw(2) << dec << colnum << ": *NULL*" << endl;
         } else {
@@ -1080,7 +1080,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OpCode::dumpRows(uint8_t *data) {
+    void OpCode::dumpRows(uint8_t *data) const {
         if (oracleAnalyzer->dumpRedoLog >= 1) {
             uint64_t pos = 0;
             char fbStr[9] = "--------";
@@ -1124,7 +1124,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OpCode::dumpVal(uint64_t fieldPos, uint64_t fieldLength, const char *msg) {
+    void OpCode::dumpVal(uint64_t fieldPos, uint64_t fieldLength, const char *msg) const {
         if (oracleAnalyzer->dumpRedoLog >= 1) {
             oracleAnalyzer->dumpStream << msg;
             for (uint64_t i = 0; i < fieldLength; ++i)
@@ -1133,7 +1133,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OpCode::processFbFlags(uint8_t fb, char *fbStr) {
+    void OpCode::processFbFlags(uint8_t fb, char *fbStr) const {
         if ((fb & FB_N) != 0) fbStr[7] = 'N'; else fbStr[7] = '-'; //Last column continues in Next piece
         if ((fb & FB_P) != 0) fbStr[6] = 'P'; else fbStr[6] = '-'; //First column continues from Previous piece
         if ((fb & FB_L) != 0) fbStr[5] = 'L'; else fbStr[5] = '-'; //Last data piece

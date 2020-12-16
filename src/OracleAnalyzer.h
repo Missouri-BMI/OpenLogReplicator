@@ -71,7 +71,7 @@ namespace OpenLogReplicator {
         bool readerCheckRedoLog(Reader *reader);
         void readerDropAll(void);
         static uint64_t getSequenceFromFileName(OracleAnalyzer *oracleAnalyzer, const string &file);
-        virtual const char* getModeName(void);
+        virtual const char* getModeName(void) const;
         virtual void checkConnection(void);
         virtual bool continueWithOnline(void);
         virtual void refreshSchema(void);

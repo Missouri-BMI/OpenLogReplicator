@@ -464,7 +464,7 @@ namespace OpenLogReplicator {
         }
     }
 
-    time_t OutputBufferJson::tmToEpoch(struct tm *epoch) {
+    time_t OutputBufferJson::tmToEpoch(struct tm *epoch) const {
         static const int cumdays[12] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
         uint64_t year;
         time_t result;

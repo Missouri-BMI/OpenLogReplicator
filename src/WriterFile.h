@@ -35,7 +35,7 @@ namespace OpenLogReplicator {
         ostream *output;
         bool fileOpen;
         virtual void sendMessage(OutputBufferMsg *msg);
-        virtual string getName();
+        virtual string getName() const;
         virtual void pollQueue(void);
 
     public:

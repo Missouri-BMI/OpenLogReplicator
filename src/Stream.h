@@ -36,7 +36,7 @@ namespace OpenLogReplicator {
     public:
         string uri;
 
-        virtual string getName(void) = 0;
+        virtual string getName(void) const = 0;
         virtual void initializeClient(volatile bool *shutdown) = 0;
         virtual void initializeServer(volatile bool *shutdown) = 0;
         virtual void sendMessage(const void *msg, uint64_t length) = 0;

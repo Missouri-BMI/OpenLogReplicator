@@ -57,7 +57,7 @@ namespace OpenLogReplicator {
         ktuxvoff(fieldPos, fieldLength);
     }
 
-    const char* OpCode0506::getUndoType(void) {
+    const char* OpCode0506::getUndoType(void) const {
         return "User undo done   ";
     }
 

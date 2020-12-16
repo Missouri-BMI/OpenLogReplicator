@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with OpenLogReplicator; see the file LICENSE;  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#include <vector>
 #include "Thread.h"
 
 #ifndef READER_H_
@@ -89,7 +90,7 @@ namespace OpenLogReplicator {
         virtual ~Reader();
 
         void *run(void);
-        typesum calcChSum(uint8_t *buffer, uint64_t size);
+        typesum calcChSum(uint8_t *buffer, uint64_t size) const;
     };
 }
 

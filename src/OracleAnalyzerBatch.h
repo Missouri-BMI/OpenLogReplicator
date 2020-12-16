@@ -28,7 +28,7 @@ namespace OpenLogReplicator {
 
     class OracleAnalyzerBatch : public OracleAnalyzer {
     protected:
-        virtual const char* getModeName(void);
+        virtual const char* getModeName(void) const;
         virtual bool continueWithOnline(void);
 
     public:

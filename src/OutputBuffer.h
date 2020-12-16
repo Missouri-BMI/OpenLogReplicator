@@ -135,7 +135,7 @@ namespace OpenLogReplicator {
         virtual ~OutputBuffer();
 
         void initialize(OracleAnalyzer *oracleAnalyzer);
-        uint64_t outputBufferSize(void);
+        uint64_t outputBufferSize(void) const;
         void setWriter(Writer *writer);
         void setNlsCharset(string &nlsCharset, string &nlsNcharCharset);
 

@@ -55,7 +55,7 @@ namespace OpenLogReplicator {
         redoLogRecord->opFlags |= OPFLAG_BEGIN_TRANS;
     }
 
-    const char* OpCode050B::getUndoType(void) {
+    const char* OpCode050B::getUndoType(void) const {
         return "User undo done    Begin trans    ";
     }
 }

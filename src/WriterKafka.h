@@ -49,7 +49,7 @@ namespace OpenLogReplicator {
         static void logger_cb(const rd_kafka_t *rk, int level, const char *fac, const char *buf);
 
         virtual void sendMessage(OutputBufferMsg *msg);
-        virtual string getName();
+        virtual string getName() const;
         virtual void pollQueue(void);
 
     public:

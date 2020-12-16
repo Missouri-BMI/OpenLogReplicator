@@ -94,6 +94,39 @@ namespace OpenLogReplicator {
                 (other.dba != dba) ||
                 (other.slot != slot);
     }
+
+    void RowId::toString(char *str) const {
+        typeAFN afn = dba >> 22;
+        typeDBA bdba = dba & 0x003FFFFF;
+
+        str[0] = map64[(dataObj >> 30) & 0x3F];
+        str[1] = map64[(dataObj >> 24) & 0x3F];
+        str[2] = map64[(dataObj >> 18) & 0x3F];
+        str[3] = map64[(dataObj >> 12) & 0x3F];
+        str[4] = map64[(dataObj >> 6) & 0x3F];
+        str[5] = map64[dataObj & 0x3F];
+        str[6] = map64[(afn >> 12) & 0x3F];
+        str[7] = map64[(afn >> 6) & 0x3F];
+        str[8] = map64[afn & 0x3F];
+        str[9] = map64[(bdba >> 30) & 0x3F];
+        str[10] = map64[(bdba >> 24) & 0x3F];
+        str[11] = map64[(bdba >> 18) & 0x3F];
+        str[12] = map64[(bdba >> 12) & 0x3F];
+        str[13] = map64[(bdba >> 6) & 0x3F];
+        str[14] = map64[bdba & 0x3F];
+        str[15] = map64[(slot >> 12) & 0x3F];
+        str[16] = map64[(slot >> 6) & 0x3F];
+        str[17] = map64[slot & 0x3F];
+        str[18] = 0;
+    }
+
+    ostream& operator<<(ostream& os, const RowId& tran) {
+        char str[19];
+        tran.toString(str);
+        os << str;
+        return os;
+    }
+
 }
 
 namespace std {

@@ -46,7 +46,7 @@ namespace OpenLogReplicator {
         void appendDec(uint64_t value);
         void appendSDec(int64_t value);
         void appendEscape(const char *str, uint64_t length);
-        time_t tmToEpoch(struct tm *epoch);
+        time_t tmToEpoch(struct tm *epoch) const;
     public:
         OutputBufferJson(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat, uint64_t scnFormat,
                 uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat);

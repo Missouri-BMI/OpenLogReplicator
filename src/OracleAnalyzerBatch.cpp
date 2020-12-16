@@ -37,7 +37,7 @@ namespace OpenLogReplicator {
     }
 
 
-    const char* OracleAnalyzerBatch::getModeName(void) {
+    const char* OracleAnalyzerBatch::getModeName(void) const {
         return "batch";
     }
 

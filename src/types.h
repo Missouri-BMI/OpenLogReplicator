@@ -210,6 +210,8 @@ namespace OpenLogReplicator {
         uintX_t& operator=(uint64_t val);
         uintX_t& operator=(const char *val);
         uintX_t& set(uint64_t val1, uint64_t val2);
+
+        friend ostream& operator<<(ostream& os, const uintX_t& val);
     };
 
     class typetime {

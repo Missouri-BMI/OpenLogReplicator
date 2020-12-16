@@ -1664,7 +1664,7 @@ namespace OpenLogReplicator {
     }
 
 
-    const char* OracleAnalyzerOnline::getModeName(void) {
+    const char* OracleAnalyzerOnline::getModeName(void) const {
         return "online";
     }
 }

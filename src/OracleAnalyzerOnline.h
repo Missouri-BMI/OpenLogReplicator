@@ -86,7 +86,7 @@ namespace OpenLogReplicator {
         string getPropertyValue(const char *property);
         void checkTableForGrants(string tableName);
         void checkTableForGrantsFlashback(string tableName, typeSCN scn);
-        virtual const char* getModeName(void);
+        virtual const char* getModeName(void) const;
         virtual void refreshSchema(void);
         void readSystemDictionariesDetails(typeUSER user, typeOBJ obj);
         void readSystemDictionaries(string maskSchema, string maskObj, bool trackDDL);

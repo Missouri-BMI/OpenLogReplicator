@@ -36,7 +36,7 @@ namespace OpenLogReplicator {
         pb::RedoRequest request;
         pb::RedoResponse response;
 
-        virtual string getName(void);
+        virtual string getName(void) const;
         virtual void readCheckpoint(void);
         void processInfo(void);
         void processStart(void);

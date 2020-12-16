@@ -1359,7 +1359,7 @@ namespace OpenLogReplicator {
         lastBuffer = firstBuffer;
     }
 
-    uint64_t OutputBuffer::outputBufferSize(void) {
+    uint64_t OutputBuffer::outputBufferSize(void) const {
         return ((messageLength + 7) & 0xFFFFFFFFFFFFFFF8) + sizeof(struct OutputBufferMsg);
     }
 

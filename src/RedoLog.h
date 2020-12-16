@@ -56,14 +56,14 @@ namespace OpenLogReplicator {
         uint64_t lwnRecords;
         uint64_t lwnStartBlock;
 
-        void printHeaderInfo(void);
+        void printHeaderInfo(void) const;
         void analyzeLwn(LwnMember* lwnMember);
         void appendToTransactionDDL(RedoLogRecord *redoLogRecord);
         void appendToTransactionUndo(RedoLogRecord *redoLogRecord);
         void appendToTransactionBegin(RedoLogRecord *redoLogRecord);
         void appendToTransactionCommit(RedoLogRecord *redoLogRecord);
         void appendToTransaction(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
-        void dumpRedoVector(uint8_t *data, uint64_t recordLength4);
+        void dumpRedoVector(uint8_t *data, uint64_t recordLength4) const;
 
     public:
         int64_t group;

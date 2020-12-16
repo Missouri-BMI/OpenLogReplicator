@@ -64,4 +64,15 @@ namespace OpenLogReplicator {
             this->data[i] = 0;
         return *this;
     }
+
+    ostream& operator<<(ostream& os, const uintX_t& val) {
+        os << "[";
+        for (uint64_t i = 0; i < TYPEINTXLEN; ++i) {
+            if (i > 0)
+                os << ",";
+            os << dec << val.data[i];
+        }
+        os << "]";
+        return os;
+    }
 }

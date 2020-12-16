@@ -41,6 +41,8 @@ namespace OpenLogReplicator {
         bool operator<(const RowId& other) const;
         bool operator!=(const RowId& other) const;
         bool operator==(const RowId& other) const;
+        void toString(char *str) const;
+        friend ostream& operator<<(ostream& os, const RowId& tran);
     };
 }
 

@@ -163,6 +163,7 @@ namespace OpenLogReplicator {
 
         bool readSchema(OracleAnalyzer *oracleAnalyzer);
         void writeSchema(OracleAnalyzer *oracleAnalyzer);
+        void writeSys(OracleAnalyzer *oracleAnalyzer, typeSCN scn);
         OracleObject *checkDict(typeOBJ obj, typeDATAOBJ dataObj);
         void addToDict(OracleObject *object);
         SchemaElement* addElement(void);
