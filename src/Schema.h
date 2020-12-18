@@ -44,7 +44,7 @@ namespace OpenLogReplicator {
         typeUSER owner;
         typeOBJ obj;       //pk
         typeDATAOBJ dataObj;
-        uint64_t type;
+        typeTYPE type;
         string name;
         uint32_t flags;
     };
@@ -56,7 +56,7 @@ namespace OpenLogReplicator {
         typeCOL segCol;
         typeCOL intCol;     //pk
         string name;
-        uint64_t type;
+        typeTYPE type;
         uint64_t length;
         int64_t precision;
         int64_t scale;
@@ -78,7 +78,7 @@ namespace OpenLogReplicator {
         RowId rowId;
         typeCON con;        //pk
         typeOBJ obj;
-        uint64_t type;
+        typeTYPE type;
     };
 
     struct SysDeferredStg {
@@ -109,7 +109,7 @@ namespace OpenLogReplicator {
         uint32_t ts;
         uint32_t file;
         uint32_t block;
-        uint64_t cluCols;
+        typeCOL cluCols;
         uint64_t flags;
         uintX_t property;
     };
@@ -169,15 +169,15 @@ namespace OpenLogReplicator {
         void addToDict(OracleObject *object);
         SchemaElement* addElement(void);
         bool dictSysUserAdd(const char *rowIdStr, typeUSER user, const char *name, uint64_t spare1);
-        bool dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags);
-        bool dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+        bool dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, typeTYPE type, const char *name, uint32_t flags);
+        bool dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, typeTYPE type, uint64_t length,
                 int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2);
         bool dictSysCColAdd(const char *rowIdStr, typeCON con, typeCOL intCol, typeOBJ obj, uint64_t spare1);
-        bool dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, uint64_t type);
+        bool dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, typeTYPE type);
         bool dictSysDeferredStgAdd(const char *rowIdStr, typeOBJ obj, uint64_t flagsStg);
         bool dictSysEColAdd(const char *rowIdStr, typeOBJ obj, uint32_t colNum, uint32_t guardId);
         bool dictSysSegAdd(const char *rowIdStr, uint32_t file, uint32_t block, uint32_t ts, uint64_t spare1);
-        bool dictSysTabAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+        bool dictSysTabAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, typeCOL cluCols,
                 uint64_t flags, uint64_t property1, uint64_t property2);
         bool dictSysTabPartAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);
         bool dictSysTabComPartAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, typeOBJ bo);

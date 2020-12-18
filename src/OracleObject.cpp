@@ -25,7 +25,7 @@ using namespace std;
 
 namespace OpenLogReplicator {
 
-    OracleObject::OracleObject(typeOBJ obj, typeDATAOBJ dataObj, uint64_t cluCols, uint64_t options, const char *owner, const char *name) :
+    OracleObject::OracleObject(typeOBJ obj, typeDATAOBJ dataObj, typeCOL cluCols, uint64_t options, const char *owner, const char *name) :
         obj(obj),
         dataObj(dataObj),
         cluCols(cluCols),

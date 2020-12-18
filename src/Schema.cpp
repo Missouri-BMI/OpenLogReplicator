@@ -172,10 +172,10 @@ namespace OpenLogReplicator {
             }
 
             const Value& cluColsJSON = getJSONfieldV(fileName, schema[i], "clu-cols");
-            uint64_t cluCols = cluColsJSON.GetInt64();
+            typeCOL cluCols = cluColsJSON.GetInt();
 
             const Value& totalPkJSON = getJSONfieldV(fileName, schema[i], "total-pk");
-            uint64_t totalPk = totalPkJSON.GetInt64();
+            typeCOL totalPk = totalPkJSON.GetInt();
 
             const Value& optionsJSON = getJSONfieldV(fileName, schema[i], "options");
             uint64_t options = optionsJSON.GetInt64();
@@ -215,7 +215,7 @@ namespace OpenLogReplicator {
                 const char* columnName = columnNameJSON.GetString();
 
                 const Value& typeNoJSON = getJSONfieldV(fileName, columns[j], "type-no");
-                uint64_t typeNo = typeNoJSON.GetUint64();
+                typeTYPE typeNo = typeNoJSON.GetUint();
 
                 const Value& lengthJSON = getJSONfieldV(fileName, columns[j], "length");
                 uint64_t length = lengthJSON.GetUint64();
@@ -542,10 +542,10 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& dataObjJSON = getJSONfieldV(fileName, sysObj[i], "data-obj");
-            typeOBJ dataObj = dataObjJSON.GetUint();
+            typeDATAOBJ dataObj = dataObjJSON.GetUint();
 
             const Value& typeJSON = getJSONfieldV(fileName, sysObj[i], "type");
-            uint64_t type = typeJSON.GetUint64();
+            typeTYPE type = typeJSON.GetUint();
 
             const Value& nameJSON = getJSONfieldV(fileName, sysObj[i], "name");
             const char *name = nameJSON.GetString();
@@ -583,7 +583,7 @@ namespace OpenLogReplicator {
             const char *name = nameJSON.GetString();
 
             const Value& typeJSON = getJSONfieldV(fileName, sysCol[i], "type");
-            uint64_t type = typeJSON.GetUint64();
+            typeTYPE type = typeJSON.GetUint();
 
             const Value& lengthJSON = getJSONfieldV(fileName, sysCol[i], "length");
             uint64_t length = lengthJSON.GetUint64();
@@ -658,7 +658,7 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& typeJSON = getJSONfieldV(fileName, sysCDef[i], "type");
-            uint64_t type = typeJSON.GetUint64();
+            typeTYPE type = typeJSON.GetUint();
 
             dictSysCDefAdd(rowId, con, obj, type);
         }
@@ -747,7 +747,7 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& dataObjJSON = getJSONfieldV(fileName, sysTab[i], "data-obj");
-            typeOBJ dataObj = dataObjJSON.GetUint();
+            typeDATAOBJ dataObj = dataObjJSON.GetUint();
 
             const Value& tsJSON = getJSONfieldV(fileName, sysTab[i], "ts");
             uint32_t ts = tsJSON.GetUint();
@@ -759,7 +759,7 @@ namespace OpenLogReplicator {
             uint32_t block = blockJSON.GetUint();
 
             const Value& cluColsJSON = getJSONfieldV(fileName, sysTab[i], "clu-cols");
-            uint64_t cluCols = cluColsJSON.GetUint64();
+            typeCOL cluCols = cluColsJSON.GetUint();
 
             const Value& flagsJSON = getJSONfieldV(fileName, sysTab[i], "flags");
             uint64_t flags = flagsJSON.GetUint64();
@@ -790,7 +790,7 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& dataObjJSON = getJSONfieldV(fileName, sysTabPart[i], "data-obj");
-            typeOBJ dataObj = dataObjJSON.GetUint();
+            typeDATAOBJ dataObj = dataObjJSON.GetUint();
 
             const Value& boJSON = getJSONfieldV(fileName, sysTabPart[i], "bo");
             typeOBJ bo = boJSON.GetUint();
@@ -813,7 +813,7 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& dataObjJSON = getJSONfieldV(fileName, sysTabComPart[i], "data-obj");
-            typeOBJ dataObj = dataObjJSON.GetUint();
+            typeDATAOBJ dataObj = dataObjJSON.GetUint();
 
             const Value& boJSON = getJSONfieldV(fileName, sysTabComPart[i], "bo");
             typeOBJ bo = boJSON.GetUint();
@@ -836,7 +836,7 @@ namespace OpenLogReplicator {
             typeOBJ obj = objJSON.GetUint();
 
             const Value& dataObjJSON = getJSONfieldV(fileName, sysTabSubPart[i], "data-obj");
-            typeOBJ dataObj = dataObjJSON.GetUint();
+            typeDATAOBJ dataObj = dataObjJSON.GetUint();
 
             const Value& pObjJSON = getJSONfieldV(fileName, sysTabSubPart[i], "p-obj");
             typeOBJ pObj = pObjJSON.GetUint();
@@ -1208,7 +1208,7 @@ namespace OpenLogReplicator {
         return true;
     }
 
-    bool Schema::dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, uint64_t type, const char *name, uint32_t flags) {
+    bool Schema::dictSysObjAdd(const char *rowIdStr, typeUSER owner, typeOBJ obj, typeDATAOBJ dataObj, typeTYPE type, const char *name, uint32_t flags) {
         RowId rowId(rowIdStr);
         if (sysObjMap[rowId] != nullptr)
             return false;
@@ -1226,7 +1226,7 @@ namespace OpenLogReplicator {
         return true;
     }
 
-    bool Schema::dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, uint64_t type, uint64_t length,
+    bool Schema::dictSysColAdd(const char *rowIdStr, typeOBJ obj, typeCOL col, typeCOL segCol, typeCOL intCol, const char *name, typeTYPE type, uint64_t length,
             int64_t precision, int64_t scale, uint64_t charsetForm, uint64_t charsetId, int64_t null, uint64_t property1, uint64_t property2) {
         RowId rowId(rowIdStr);
         if (sysColMap[rowId] != nullptr)
@@ -1268,7 +1268,7 @@ namespace OpenLogReplicator {
         return true;
     }
 
-    bool Schema::dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, uint64_t type) {
+    bool Schema::dictSysCDefAdd(const char *rowIdStr, typeCON con, typeOBJ obj, typeTYPE type) {
         RowId rowId(rowIdStr);
         if (sysCDefMap[rowId] != nullptr)
             return false;
@@ -1328,7 +1328,7 @@ namespace OpenLogReplicator {
         return true;
     }
 
-    bool Schema::dictSysTabAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, uint64_t cluCols,
+    bool Schema::dictSysTabAdd(const char *rowIdStr, typeOBJ obj, typeDATAOBJ dataObj, uint32_t ts, uint32_t file, uint32_t block, typeCOL cluCols,
             uint64_t flags, uint64_t property1, uint64_t property2) {
         RowId rowId(rowIdStr);
         if (sysTabMap[rowId] != nullptr)
@@ -1393,5 +1393,4 @@ namespace OpenLogReplicator {
 
         return true;
     }
-
 }

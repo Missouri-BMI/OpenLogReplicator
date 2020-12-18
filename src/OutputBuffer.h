@@ -113,7 +113,7 @@ namespace OpenLogReplicator {
         void valueBufferAppend(uint8_t value);
         void valueBufferAppendHex(typeunicode value, uint64_t length);
         void processValue(OracleColumn *column, const uint8_t *data, uint64_t length, uint64_t typeNo, uint64_t charsetId);
-        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) = 0;
+        virtual void appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) = 0;
         virtual void appendHeader(bool first) = 0;
         virtual void appendSchema(OracleObject *object) = 0;
 

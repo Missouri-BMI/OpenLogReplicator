@@ -41,7 +41,7 @@ protected:
         virtual void columnNumber(string &columnName, uint64_t precision, uint64_t scale);
         virtual void columnRaw(string &columnName, const uint8_t *data, uint64_t length);
         virtual void columnTimestamp(string &columnName, struct tm &time, uint64_t fraction, const char *tz);
-        virtual void appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot);
+        virtual void appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot);
         virtual void appendHeader(bool first);
         virtual void appendSchema(OracleObject *object);
         void numToString(uint64_t value, char *buf, uint64_t length);

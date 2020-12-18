@@ -38,6 +38,7 @@ namespace OpenLogReplicator {
 
         RowId();
         RowId(const char *rowid);
+        RowId(typeDATAOBJ dataObj, typeDBA dba, typeSLOT slot);
         bool operator<(const RowId& other) const;
         bool operator!=(const RowId& other) const;
         bool operator==(const RowId& other) const;

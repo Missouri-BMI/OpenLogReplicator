@@ -73,6 +73,10 @@ namespace OpenLogReplicator {
                 ((typeSLOT)map64R[rowid[17]]);
     }
 
+    RowId::RowId(typeDATAOBJ dataObj, typeDBA dba, typeSLOT slot):
+            dataObj(dataObj), dba(dba), slot(slot) {
+    }
+
     bool RowId::operator<(const RowId& other) const {
         if (other.dataObj < dataObj)
             return true;
@@ -126,7 +130,6 @@ namespace OpenLogReplicator {
         os << str;
         return os;
     }
-
 }
 
 namespace std {
@@ -136,4 +139,3 @@ namespace std {
                 hash<typeSLOT>()(rowId.slot);
     }
 }
-

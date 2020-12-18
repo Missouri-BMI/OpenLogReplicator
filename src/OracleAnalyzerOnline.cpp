@@ -1187,7 +1187,7 @@ namespace OpenLogReplicator {
         uint32_t tabTs; stmtTab.defineUInt32(4, tabTs);
         uint32_t tabFile; stmtTab.defineUInt32(5, tabFile);
         uint32_t tabBlock; stmtTab.defineUInt32(6, tabBlock);
-        uint64_t tabCluCols; stmtTab.defineUInt64(7, tabCluCols);
+        typeCOL tabCluCols; stmtTab.defineInt16(7, tabCluCols);
         uint64_t tabFlags; stmtTab.defineUInt64(8, tabFlags);
         uint64_t tabProperty1; stmtTab.defineUInt64(9, tabProperty1);
         uint64_t tabProperty2; stmtTab.defineUInt64(10, tabProperty2);
@@ -1420,7 +1420,7 @@ namespace OpenLogReplicator {
         stmt.createStatement(SQL_GET_TABLE_LIST);
         typeDATAOBJ dataObj; stmt.defineUInt32(1, dataObj);
         typeOBJ obj; stmt.defineUInt32(2, obj);
-        uint64_t cluCols; stmt.defineUInt64(3, cluCols);
+        typeCOL cluCols; stmt.defineInt16(3, cluCols);
         char owner[129]; stmt.defineString(4, owner, sizeof(owner));
         char name[129]; stmt.defineString(5, name, sizeof(name));
         uint64_t clustered; stmt.defineUInt64(6, clustered);
@@ -1459,8 +1459,8 @@ namespace OpenLogReplicator {
         int64_t added; stmtCol.defineInt64(14, added);
         int64_t guard; stmtCol.defineInt64(15, guard);
         typeCOL guardSegNo; stmtCol.defineInt16(16, guardSegNo);
-        uint64_t numPk; stmtCol.defineUInt64(17, numPk);
-        uint64_t numSup; stmtCol.defineUInt64(18, numSup);
+        typeCOL numPk; stmtCol.defineInt16(17, numPk);
+        typeCOL numSup; stmtCol.defineInt16(18, numSup);
         stmtCol.bindUInt32(1, obj);
 
         TRACE_(TRACE2_SQL, SQL_GET_PARTITION_LIST << endl <<
@@ -1529,7 +1529,7 @@ namespace OpenLogReplicator {
                 continue;
             }
 
-            uint64_t totalPk = 0, maxSegCol = 0, keysCnt = 0;
+            typeCOL totalPk = 0, maxSegCol = 0, keysCnt = 0;
             bool suppLogTablePrimary = false, suppLogTableAll = false, supLogColMissing = false;
 
             schema->object = new OracleObject(obj, dataObj, cluCols, options, owner, name);

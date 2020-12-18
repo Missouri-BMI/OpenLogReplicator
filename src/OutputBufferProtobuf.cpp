@@ -21,6 +21,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OracleColumn.h"
 #include "OracleObject.h"
 #include "OutputBufferProtobuf.h"
+#include "RowId.h"
 #include "RuntimeException.h"
 
 namespace OpenLogReplicator {
@@ -93,30 +94,11 @@ namespace OpenLogReplicator {
         valuePB->set_name(columnName);
     }
 
-    void OutputBufferProtobuf::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
-        typeAFN afn = bdba >> 22;
-        bdba &= 0x003FFFFF;
-
-        char rid[18];
-        rid[0] = map64[(dataObj >> 30) & 0x3F];
-        rid[1] = map64[(dataObj >> 24) & 0x3F];
-        rid[2] = map64[(dataObj >> 18) & 0x3F];
-        rid[3] = map64[(dataObj >> 12) & 0x3F];
-        rid[4] = map64[(dataObj >> 6) & 0x3F];
-        rid[5] = map64[dataObj & 0x3F];
-        rid[6] = map64[(afn >> 12) & 0x3F];
-        rid[7] = map64[(afn >> 6) & 0x3F];
-        rid[8] = map64[afn & 0x3F];
-        rid[9] = map64[(bdba >> 30) & 0x3F];
-        rid[10] = map64[(bdba >> 24) & 0x3F];
-        rid[11] = map64[(bdba >> 18) & 0x3F];
-        rid[12] = map64[(bdba >> 12) & 0x3F];
-        rid[13] = map64[(bdba >> 6) & 0x3F];
-        rid[14] = map64[bdba & 0x3F];
-        rid[15] = map64[(slot >> 12) & 0x3F];
-        rid[16] = map64[(slot >> 6) & 0x3F];
-        rid[17] = map64[slot & 0x3F];
-        payloadPB->set_rid(rid, 18);
+    void OutputBufferProtobuf::appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
+        RowId rowId(dataObj, bdba, slot);
+        char str[19];
+        rowId.toString(str);
+        payloadPB->set_rid(str, 18);
     }
 
     void OutputBufferProtobuf::appendHeader(bool first) {
@@ -363,7 +345,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;
@@ -421,7 +403,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;
@@ -500,7 +482,7 @@ namespace OpenLogReplicator {
         schemaPB = payloadPB->mutable_schema();
         appendSchema(object);
 
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
 
         for (auto it = valuesMap.cbegin(); it != valuesMap.cend(); ++it) {
             uint16_t i = (*it).first;

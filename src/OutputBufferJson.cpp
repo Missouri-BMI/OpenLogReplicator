@@ -21,6 +21,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OracleColumn.h"
 #include "OracleObject.h"
 #include "OutputBufferJson.h"
+#include "RowId.h"
 
 namespace OpenLogReplicator {
 
@@ -167,28 +168,12 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::appendRowid(typeOBJ obj, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
-        typeAFN afn = bdba >> 22;
-        bdba &= 0x003FFFFF;
+    void OutputBufferJson::appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) {
+        RowId rowId(dataObj, bdba, slot);
+        char str[19];
+        rowId.toString(str);
         outputBufferAppend("\"rid\":\"");
-        outputBufferAppend(map64[(dataObj >> 30) & 0x3F]);
-        outputBufferAppend(map64[(dataObj >> 24) & 0x3F]);
-        outputBufferAppend(map64[(dataObj >> 18) & 0x3F]);
-        outputBufferAppend(map64[(dataObj >> 12) & 0x3F]);
-        outputBufferAppend(map64[(dataObj >> 6) & 0x3F]);
-        outputBufferAppend(map64[dataObj & 0x3F]);
-        outputBufferAppend(map64[(afn >> 12) & 0x3F]);
-        outputBufferAppend(map64[(afn >> 6) & 0x3F]);
-        outputBufferAppend(map64[afn & 0x3F]);
-        outputBufferAppend(map64[(bdba >> 30) & 0x3F]);
-        outputBufferAppend(map64[(bdba >> 24) & 0x3F]);
-        outputBufferAppend(map64[(bdba >> 18) & 0x3F]);
-        outputBufferAppend(map64[(bdba >> 12) & 0x3F]);
-        outputBufferAppend(map64[(bdba >> 6) & 0x3F]);
-        outputBufferAppend(map64[bdba & 0x3F]);
-        outputBufferAppend(map64[(slot >> 12) & 0x3F]);
-        outputBufferAppend(map64[(slot >> 6) & 0x3F]);
-        outputBufferAppend(map64[slot & 0x3F]);
+        outputBufferAppend(str);
         outputBufferAppend('"');
     }
 
@@ -533,7 +518,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"c\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
         outputBufferAppend(",\"after\":{");
 
         hasPreviousColumn = false;
@@ -576,7 +561,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"u\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
         outputBufferAppend(",\"before\":{");
 
         hasPreviousColumn = false;
@@ -638,7 +623,7 @@ namespace OpenLogReplicator {
         outputBufferAppend("{\"op\":\"d\",");
         appendSchema(object);
         outputBufferAppend(',');
-        appendRowid(object->obj, object->dataObj, bdba, slot);
+        appendRowid(object->dataObj, bdba, slot);
         outputBufferAppend(",\"before\":{");
 
         hasPreviousColumn = false;

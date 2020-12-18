@@ -53,6 +53,7 @@ typedef uint32_t typeOBJ;
 typedef uint32_t typeDATAOBJ;
 typedef uint64_t typeOBJ2;
 typedef int16_t typeCOL;
+typedef uint16_t typeTYPE;
 typedef uint32_t typeCON;
 typedef uint32_t typeUSER;
 
