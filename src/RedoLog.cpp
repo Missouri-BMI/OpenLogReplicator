@@ -319,22 +319,22 @@ namespace OpenLogReplicator {
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN48(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
                 else
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN64(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
-                uint32_t nst = 1; //FIXME
-                uint32_t lwnLen = oracleAnalyzer->read32(data + 28);
+                uint16_t lwnNst = oracleAnalyzer->read32(data + 26);
+                uint32_t lwnLen = oracleAnalyzer->read32(data + 32);
 
                 if (oracleAnalyzer->version < 0x12200)
                     oracleAnalyzer->dumpStream << "(LWN RBA: 0x" << setfill('0') << setw(6) << hex << sequence << "." <<
                                     setfill('0') << setw(8) << hex << lwnMember->block << "." <<
                                     setfill('0') << setw(4) << hex << lwnMember->pos <<
                         " LEN: " << setfill('0') << setw(4) << dec << lwnLen <<
-                        " NST: " << setfill('0') << setw(4) << dec << nst <<
+                        " NST: " << setfill('0') << setw(4) << dec << lwnNst <<
                         " SCN: " << PRINTSCN48(lwnScn) << ")" << endl;
                 else
                     oracleAnalyzer->dumpStream << "(LWN RBA: 0x" << setfill('0') << setw(6) << hex << sequence << "." <<
                                     setfill('0') << setw(8) << hex << lwnMember->block << "." <<
                                     setfill('0') << setw(4) << hex << lwnMember->pos <<
                         " LEN: 0x" << setfill('0') << setw(8) << hex << lwnLen <<
-                        " NST: 0x" << setfill('0') << setw(4) << hex << nst <<
+                        " NST: 0x" << setfill('0') << setw(4) << hex << lwnNst <<
                         " SCN: " << PRINTSCN64(lwnScn) << ")" << endl;
             } else {
                 if (oracleAnalyzer->version < 0x12200)
@@ -623,9 +623,11 @@ namespace OpenLogReplicator {
         if ((oracleAnalyzer->flags & REDO_FLAGS_TRACK_DDL) == 0)
             return;
 
-        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
-        if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
-            return;
+        if ((oracleAnalyzer->flags & REDO_FLAGS_SCHEMALESS) == 0) {
+            redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
+            if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
+                return;
+        }
 
         Transaction *transaction = oracleAnalyzer->xidTransactionMap[redoLogRecord->xid >> 32];
         if (transaction == nullptr) {
@@ -653,9 +655,11 @@ namespace OpenLogReplicator {
         if ((redoLogRecord->flg & (FLG_MULTIBLOCKUNDOHEAD | FLG_MULTIBLOCKUNDOMID | FLG_MULTIBLOCKUNDOTAIL)) == 0)
             return;
 
-        redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
-        if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
-            return;
+        if ((oracleAnalyzer->flags & REDO_FLAGS_SCHEMALESS) == 0) {
+            redoLogRecord->object = oracleAnalyzer->schema->checkDict(redoLogRecord->obj, redoLogRecord->dataObj);
+            if (redoLogRecord->object == nullptr || redoLogRecord->object->options != 0)
+                return;
+        }
 
         Transaction *transaction = oracleAnalyzer->xidTransactionMap[redoLogRecord->xid >> 32];
         if (transaction == nullptr) {
@@ -779,9 +783,11 @@ namespace OpenLogReplicator {
             REDOLOG_FAIL("BDBA does not match (0x" << hex << redoLogRecord1->bdba << ", " << redoLogRecord2->bdba << ")");
         }
 
-        redoLogRecord1->object = oracleAnalyzer->schema->checkDict(obj, dataObj);
-        if (redoLogRecord1->object == nullptr)
-            return;
+        if ((oracleAnalyzer->flags & REDO_FLAGS_SCHEMALESS) == 0) {
+            redoLogRecord1->object = oracleAnalyzer->schema->checkDict(obj, dataObj);
+            if (redoLogRecord1->object == nullptr)
+                return;
+        }
 
         //cluster key
         if ((redoLogRecord1->fb & FB_K) != 0 || (redoLogRecord2->fb & FB_K) != 0)
@@ -794,7 +800,7 @@ namespace OpenLogReplicator {
         redoLogRecord2->object = redoLogRecord1->object;
 
         long opCodeLong = (redoLogRecord1->opCode << 16) | redoLogRecord2->opCode;
-        if (redoLogRecord1->object->options == 1 && opCodeLong == 0x05010B02) {
+        if (redoLogRecord1->object != nullptr && redoLogRecord1->object->options == 1 && opCodeLong == 0x05010B02) {
             INFO("found shutdown command in events table");
             shutdown = true;
         }

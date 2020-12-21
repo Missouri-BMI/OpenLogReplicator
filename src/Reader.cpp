@@ -258,8 +258,10 @@ namespace OpenLogReplicator {
         if (compatVsn == 0x13090000) //19.9.0.0
             version = 0x19900;
 
-        if (oracleAnalyzer->version == 0)
+        if (oracleAnalyzer->version == 0) {
             oracleAnalyzer->version = version;
+            INFO("found redo log version: 0x" << setfill('0') << setw(8) << hex << compatVsn);
+        }
 
         if (version == 0 || version != oracleAnalyzer->version) {
             ERROR("unsupported database version: 0x" << setfill('0') << setw(8) << hex << compatVsn);
@@ -276,6 +278,9 @@ namespace OpenLogReplicator {
         if (ret != REDO_OK)
             return ret;
 
+        if (oracleAnalyzer->resetlogs == 0 && (oracleAnalyzer->flags & REDO_FLAGS_SCHEMALESS) != 0)
+            oracleAnalyzer->resetlogs = resetlogsRead;
+
         if (resetlogsRead != oracleAnalyzer->resetlogs) {
             if (group == 0) {
                 ERROR("resetlogs id (" << dec << resetlogsRead << ") for archived redo log does not match database information (" <<
@@ -285,6 +290,9 @@ namespace OpenLogReplicator {
                         oracleAnalyzer->resetlogs << "): " << pathMapped);
             } return REDO_ERROR;
         }
+
+        if (oracleAnalyzer->activation == 0 && (oracleAnalyzer->flags & REDO_FLAGS_SCHEMALESS) != 0)
+            oracleAnalyzer->activation = activationRead;
 
         if (activationRead != 0 && activationRead != oracleAnalyzer->activation) {
             if (group == 0) {

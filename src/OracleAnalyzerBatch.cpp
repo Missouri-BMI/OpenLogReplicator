@@ -18,6 +18,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "OracleAnalyzerBatch.h"
+#include "RuntimeException.h"
 
 using namespace std;
 
@@ -36,6 +37,12 @@ namespace OpenLogReplicator {
     OracleAnalyzerBatch::~OracleAnalyzerBatch() {
     }
 
+    void OracleAnalyzerBatch::start(void) {
+        initializeSchema();
+        context = database;
+        if (scn == ZERO_SCN)
+            scn = 0;
+    }
 
     const char* OracleAnalyzerBatch::getModeName(void) const {
         return "batch";

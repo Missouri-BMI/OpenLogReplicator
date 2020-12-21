@@ -30,7 +30,7 @@ namespace OpenLogReplicator {
     protected:
         bool hasPreviousRedo;
         bool hasPreviousColumn;
-        virtual void columnNull(OracleColumn *column);
+        virtual void columnNull(OracleObject *object, typeCOL col);
         virtual void columnFloat(string &columnName, float value);
         virtual void columnDouble(string &columnName, double value);
         virtual void columnString(string &columnName);
@@ -39,7 +39,7 @@ namespace OpenLogReplicator {
         virtual void columnTimestamp(string &columnName, struct tm &epochtime, uint64_t fraction, const char *tz);
         virtual void appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot);
         virtual void appendHeader(bool first);
-        virtual void appendSchema(OracleObject *object);
+        virtual void appendSchema(OracleObject *object, typeDATAOBJ dataObj);
 
         void appendHex(uint64_t value, uint64_t length);
         void appendDec(uint64_t value, uint64_t length);
@@ -54,10 +54,10 @@ namespace OpenLogReplicator {
 
         virtual void processBegin(typeSCN scn, typetime time, typeXID xid);
         virtual void processCommit(void);
-        virtual void processInsert(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
-        virtual void processUpdate(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
-        virtual void processDelete(OracleObject *object, typeDBA bdba, typeSLOT slot, typeXID xid);
-        virtual void processDDL(OracleObject *object, uint16_t type, uint16_t seq, const char *operation, const char *sql, uint64_t sqlLength);
+        virtual void processInsert(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
+        virtual void processUpdate(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
+        virtual void processDelete(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
+        virtual void processDDL(OracleObject *object, typeDATAOBJ dataObj, uint16_t type, uint16_t seq, const char *operation, const char *sql, uint64_t sqlLength);
     };
 }
 

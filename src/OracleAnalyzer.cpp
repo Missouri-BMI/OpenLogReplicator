@@ -403,7 +403,7 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzer::initialize(void) {
-        //nothing here for offline mode
+        archReader = readerCreate(0);
     }
 
     void OracleAnalyzer::start(void) {
@@ -424,7 +424,14 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzer::initializeSchema(void) {
-        INFO_("last confirmed SCN: " << dec << scn);
+        if ((flags & REDO_FLAGS_SCHEMALESS) != 0)
+            return;
+
+        if (scn == ZERO_SCN) {
+            INFO_("last confirmed SCN: <none>");
+        } else {
+            INFO_("last confirmed SCN: " << dec << scn);
+        }
         if (!schema->readSchema(this)) {
             refreshSchema();
             schema->writeSchema(this);
