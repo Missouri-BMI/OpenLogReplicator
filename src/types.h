@@ -39,13 +39,13 @@ typedef uint16_t typeconid;
 typedef uint32_t typeblk;
 typedef uint8_t typeslt;
 typedef uint8_t typerci;
-typedef uint32_t typeusnslt;
 
 typedef uint64_t typeUBA;
 typedef uint32_t typeSEQ;
 typedef uint64_t typeSCN;
 typedef uint16_t typeSubSCN;
 typedef uint64_t typeXID;
+typedef uint64_t typeXIDMAP;
 typedef uint16_t typeAFN;
 typedef uint32_t typeDBA;
 typedef uint16_t typeSLOT;

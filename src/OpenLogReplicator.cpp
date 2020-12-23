@@ -521,9 +521,16 @@ int main(int argc, char **argv) {
             } else if (strcmp(readerTypeJSON.GetString(), "batch") == 0) {
                  flags |= REDO_FLAGS_ARCH_ONLY;
 
+                 //optional
+                 typeconid conId = 0;
+                 if (readerJSON.HasMember("con-id")) {
+                     const Value& conIdJSON = readerJSON["con-id"];
+                     conId = conIdJSON.GetUint();
+                 }
+
                  oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
                          trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, memoryMinMb,
-                         memoryMaxMb, logArchiveFormat, savepointPath);
+                         memoryMaxMb, logArchiveFormat, savepointPath, conId);
 
                  if (oracleAnalyzer == nullptr) {
                      RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzerBatch) << " bytes memory (for: oracle analyzer)");

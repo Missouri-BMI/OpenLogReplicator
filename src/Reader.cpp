@@ -137,8 +137,14 @@ namespace OpenLogReplicator {
                 return REDO_ERROR;
             }
 
-            if ((oracleAnalyzer->isBigEndian && (headerBuffer[28] != 0x7A || headerBuffer[29] != 0x7B || headerBuffer[30] != 0x7C || headerBuffer[31] != 0x7D))
-                    || (!oracleAnalyzer->isBigEndian && (headerBuffer[28] != 0x7D || headerBuffer[29] != 0x7C || headerBuffer[30] != 0x7B || headerBuffer[31] != 0x7A))) {
+            if (headerBuffer[28] == 0x7A && headerBuffer[29] == 0x7B && headerBuffer[30] == 0x7C && headerBuffer[31] == 0x7D) {
+                if (!oracleAnalyzer->isBigEndian) {
+                    INFO("File: " << pathMapped << " has BIG ENDIAN data, changing configuration");
+                    oracleAnalyzer->setBigEndian();
+                }
+            } else
+            if (headerBuffer[28] != 0x7D || headerBuffer[29] != 0x7C || headerBuffer[30] != 0x7B || headerBuffer[31] != 0x7A ||
+                    oracleAnalyzer->isBigEndian) {
                 ERROR("block header bad magic fields[28-31]: [0x" << setfill('0') << setw(2) << hex << (uint64_t)headerBuffer[28] <<
                         ", 0x" << setfill('0') << setw(2) << hex << (uint64_t)headerBuffer[29] <<
                         ", 0x" << setfill('0') << setw(2) << hex << (uint64_t)headerBuffer[30] <<
