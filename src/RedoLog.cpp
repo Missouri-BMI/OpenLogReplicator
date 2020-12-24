@@ -319,7 +319,7 @@ namespace OpenLogReplicator {
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN48(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
                 else
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN64(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
-                uint16_t lwnNst = oracleAnalyzer->read32(data + 26);
+                uint16_t lwnNst = oracleAnalyzer->read16(data + 26);
                 uint32_t lwnLen = oracleAnalyzer->read32(data + 32);
 
                 if (oracleAnalyzer->version < 0x12200)
