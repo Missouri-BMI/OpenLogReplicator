@@ -32,6 +32,7 @@ namespace OpenLogReplicator {
 
     Transaction::Transaction(OracleAnalyzer *oracleAnalyzer, typeXID xid) :
             oracleAnalyzer(oracleAnalyzer),
+            deallocTc(nullptr),
             xid(xid),
             firstSequence(0),
             firstPos(0),
@@ -52,6 +53,14 @@ namespace OpenLogReplicator {
             firstTc = nullptr;
             lastTc = nullptr;
         }
+
+        while (deallocTc != nullptr) {
+            TransactionChunk *nextTc = deallocTc->next;
+            oracleAnalyzer->transactionBuffer->deleteTransactionChunk(deallocTc);
+            deallocTc = nextTc;
+        }
+        deallocTc = nullptr;
+
         for (uint8_t* buf : merges)
             delete[] buf;
         merges.clear();
@@ -112,7 +121,7 @@ namespace OpenLogReplicator {
 
     void Transaction::flush(void) {
         bool opFlush = false;
-        TransactionChunk *deallocTc = nullptr;
+        deallocTc = nullptr;
 
         if (opCodes > 0 && !isRollback) {
             TRACE(TRACE2_TRANSACTION, *this);

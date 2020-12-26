@@ -37,6 +37,7 @@ namespace OpenLogReplicator {
     protected:
         OracleAnalyzer *oracleAnalyzer;
         vector<uint8_t*> merges;
+        TransactionChunk *deallocTc;
         void mergeBlocks(uint8_t *buffer, RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
 
     public:
