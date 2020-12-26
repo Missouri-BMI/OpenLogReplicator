@@ -271,7 +271,7 @@ namespace OpenLogReplicator {
 
         vectors = 0;
         memset(opCodes, 0, sizeof(opCodes));
-        uint64_t recordLength = oracleAnalyzer->read32(data);
+        uint32_t recordLength = oracleAnalyzer->read32(data);
         uint8_t vld = data[4];
         uint64_t headerLength;
 
@@ -955,7 +955,7 @@ namespace OpenLogReplicator {
         curBufferStart = reader->bufferStart;
         bufferPos = (currentBlock * reader->blockSize) % DISK_BUFFER_SIZE;
         uint64_t recordLength4 = 0, recordPos = 0, recordLeftToCopy = 0, lwnEndBlock = lwnConfirmedBlock;
-        uint16_t lwnNum = 0, lwnNumMax = 0;
+        uint16_t lwnNum = 0, lwnNumMax = 0, lwnNumCnt = 0;
         lwnStartBlock = lwnConfirmedBlock;
 
         while (!oracleAnalyzer->shutdown) {
@@ -970,6 +970,7 @@ namespace OpenLogReplicator {
                     uint8_t vld = reader->redoBuffer[bufferPos + blockPos + 4];
 
                     if ((vld & 0x04) != 0) {
+                        ++lwnNumCnt;
                         lwnNum = oracleAnalyzer->read16(reader->redoBuffer + bufferPos + blockPos + 24);
                         lwnNumMax = oracleAnalyzer->read16(reader->redoBuffer + bufferPos + blockPos + 26);
                         uint32_t lwnLength = oracleAnalyzer->read32(reader->redoBuffer + bufferPos + blockPos + 28);
@@ -1053,7 +1054,7 @@ namespace OpenLogReplicator {
                 ++currentBlock;
 
                 //checkpoint
-                if (currentBlock == lwnEndBlock && lwnNum + 1 >= lwnNumMax) {
+                if (currentBlock == lwnEndBlock && lwnNumCnt == lwnNumMax) {
                     try {
                         TRACE(TRACE2_LWN, "LWN: analyze");
                         for (uint64_t i = 0; i < lwnRecords; ++i) {
@@ -1070,6 +1071,7 @@ namespace OpenLogReplicator {
 
                     for (uint64_t i = 1; i < lwnAllocated; ++i)
                         oracleAnalyzer->freeMemoryChunk("LWN", lwnChunks[i], false);
+                    lwnNumCnt = 0;
                     lwnAllocated = 1;
                     uint64_t *length = (uint64_t *)lwnChunks[0];
                     *length = sizeof(uint64_t);
