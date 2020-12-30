@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with OpenLogReplicator; see the file LICENSE;  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#include <algorithm>
 #include <unistd.h>
 
 #include "DatabaseConnection.h"
@@ -702,6 +703,8 @@ namespace OpenLogReplicator {
 
         dbRecoveryFileDest = getParameterValue("db_recovery_file_dest");
         logArchiveDest = getParameterValue("log_archive_dest");
+        dbBlockChecksum = getParameterValue("db_block_checksum");
+        std::transform(dbBlockChecksum.begin(), dbBlockChecksum.end(), dbBlockChecksum.begin(), ::toupper);
         if (logArchiveFormat.length() == 0 && dbRecoveryFileDest.length() == 0)
             logArchiveFormat = getParameterValue("log_archive_format");
         nlsCharacterSet = getPropertyValue("NLS_CHARACTERSET");

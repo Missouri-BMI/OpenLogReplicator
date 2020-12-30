@@ -57,6 +57,7 @@ namespace OpenLogReplicator {
         memoryChunksHWM(0),
         memoryChunksSupplemental(0),
         database(database),
+        dbBlockChecksum(""),
         logArchiveFormat(logArchiveFormat),
         savepointPath(savepointPath),
         archReader(nullptr),
@@ -483,6 +484,13 @@ namespace OpenLogReplicator {
                     return 0;
 
                 start();
+
+                if ((dbBlockChecksum.compare("OFF") == 0 || dbBlockChecksum.compare("FALSE") == 0) &&
+                        (flags & REDO_FLAGS_SKIP_BLOCK_CHECK_SUM) == 0) {
+                    WARNING_("database parameter db_block_checksum = " << dbBlockChecksum << ", disabling block checksum calculation");
+                    flags |= REDO_FLAGS_SKIP_BLOCK_CHECK_SUM;
+                }
+
                 {
                     unique_lock<mutex> lck(mtx);
                     outputBuffer->writersCond.notify_all();
