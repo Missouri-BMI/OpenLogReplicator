@@ -41,9 +41,11 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #define REDO_ERROR              2
 #define REDO_FINISHED           3
 #define REDO_EMPTY              4
+#define REDO_BAD_CRC            5
 
 #define DISK_BUFFER_SIZE        MEMORY_CHUNK_SIZE
 #define REDO_PAGE_SIZE_MAX      4096
+#define REDO_BAD_CDC_MAX_CNT    20
 
 using namespace std;
 
@@ -55,6 +57,7 @@ namespace OpenLogReplicator {
     protected:
         OracleAnalyzer *oracleAnalyzer;
         bool singleBlockRead;
+        bool hintDisplayed;
 
         virtual void redoClose(void) = 0;
         virtual uint64_t redoOpen(void) = 0;

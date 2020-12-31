@@ -87,6 +87,7 @@ namespace OpenLogReplicator {
         string nlsCharacterSet;
         string nlsNcharCharacterSet;
         string dbRecoveryFileDest;
+        string dbBlockChecksum;
         string logArchiveFormat;
         string logArchiveDest;
         string savepointPath;
