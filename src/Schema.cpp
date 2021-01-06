@@ -762,7 +762,7 @@ namespace OpenLogReplicator {
             uint32_t block = blockJSON.GetUint();
 
             const Value& cluColsJSON = getJSONfieldV(fileName, sysTab[i], "clu-cols");
-            typeCOL cluCols = cluColsJSON.GetUint();
+            typeCOL cluCols = cluColsJSON.GetInt();
 
             const Value& flagsJSON = getJSONfieldV(fileName, sysTab[i], "flags");
             uint64_t flags = flagsJSON.GetUint64();

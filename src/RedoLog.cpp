@@ -574,6 +574,9 @@ namespace OpenLogReplicator {
             }
 
             ++vectors;
+            if (vectors >= VECTOR_MAX_LENGTH) {
+                RUNTIME_FAIL("out of redo vectors(" << dec << vectors << "), at pos: " << dec << pos << " record length: " << dec << recordLength);
+            }
         }
 
         for (uint64_t i = 0; i < vectors; ++i) {
@@ -743,7 +746,6 @@ namespace OpenLogReplicator {
 
         oracleAnalyzer->xidTransactionMap.erase((redoLogRecord->xid >> 32) | (((uint64_t)redoLogRecord->conId) << 32));
         delete transaction;
-
     }
 
     void RedoLog::appendToTransaction(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2) {
