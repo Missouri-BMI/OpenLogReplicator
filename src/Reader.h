@@ -29,6 +29,10 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #define READER_STATUS_UPDATE    2
 #define READER_STATUS_READ      3
 
+#define REDO_VERSION_12_1       0x0C100000
+#define REDO_VERSION_12_2       0x0C200000
+#define REDO_VERSION_19_0       0x13000000
+
 #define REDO_END                0x0008
 #define REDO_ASYNC              0x0100
 #define REDO_NODATALOSS         0x0200

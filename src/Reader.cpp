@@ -186,92 +186,13 @@ namespace OpenLogReplicator {
 
         uint64_t version = 0;
         compatVsn = oracleAnalyzer->read32(headerBuffer + blockSize + 20);
-        if (compatVsn == 0x0B200000) //11.2.0.0
-            version = 0x11200;
-        else
-        if (compatVsn == 0x0B200100) //11.2.0.1
-            version = 0x11201;
-        else
-        if (compatVsn == 0x0B200200) //11.2.0.2
-            version = 0x11202;
-        else
-        if (compatVsn == 0x0B200300) //11.2.0.3
-            version = 0x11203;
-        else
-        if (compatVsn == 0x0B200400) //11.2.0.4
-            version = 0x11204;
-        else
-        if (compatVsn == 0x0C100000) //12.1.0.0
-            version = 0x12100;
-        else
-        if (compatVsn == 0x0C100100) //12.1.0.1
-            version = 0x12101;
-        else
-        if (compatVsn == 0x0C100200) //12.1.0.2
-            version = 0x12102;
-        else
-        if (compatVsn == 0x0C200000) //12.2.0.0
-            version = 0x12200;
-        else
-        if (compatVsn == 0x0C200100) //12.2.0.1
-            version = 0x12201;
-        else
-        if (compatVsn == 0x12000000) //18.0.0.0
-            version = 0x18000;
-        else
-        if (compatVsn == 0x12030000) //18.3.0.0
-            version = 0x18300;
-        else
-        if (compatVsn == 0x12040000) //18.4.0.0
-            version = 0x18400;
-        else
-        if (compatVsn == 0x12050000) //18.5.0.0
-            version = 0x18500;
-        else
-        if (compatVsn == 0x12060000) //18.6.0.0
-            version = 0x18600;
-        else
-        if (compatVsn == 0x12070000) //18.7.0.0
-            version = 0x18700;
-        else
-        if (compatVsn == 0x12080000) //18.8.0.0
-            version = 0x18800;
-        else
-        if (compatVsn == 0x12090000) //18.9.0.0
-            version = 0x18900;
-        else
-        if (compatVsn == 0x120A0000) //18.10.0.0
-            version = 0x18A00;
-        else
-        if (compatVsn == 0x120B0000) //18.11.0.0
-            version = 0x18B00;
-        else
-        if (compatVsn == 0x120C0000) //18.12.0.0
-            version = 0x18C00;
-        else
-        if (compatVsn == 0x13000000) //19.0.0.0
-            version = 0x19000;
-        else
-        if (compatVsn == 0x13030000) //19.3.0.0
-            version = 0x19300;
-        else
-        if (compatVsn == 0x13040000) //19.4.0.0
-            version = 0x19400;
-        else
-        if (compatVsn == 0x13050000) //19.5.0.0
-            version = 0x19500;
-        else
-        if (compatVsn == 0x13060000) //19.6.0.0
-            version = 0x19600;
-        else
-        if (compatVsn == 0x13070000) //19.7.0.0
-            version = 0x19700;
-        else
-        if (compatVsn == 0x13080000) //19.8.0.0
-            version = 0x19800;
-        else
-        if (compatVsn == 0x13090000) //19.9.0.0
-            version = 0x19900;
+
+        if ((compatVsn >= 0x0B200000 && compatVsn <= 0x0B200400) //11.2.0.0 - 11.2.0.4
+            || (compatVsn >= 0x0C100000 && compatVsn <= 0x0C100200) //12.1.0.0 - 12.1.0.2
+            || (compatVsn >= 0x0C200000 && compatVsn <= 0x0C200100) //12.2.0.0 - 12.2.0.1
+            || (compatVsn >= 0x12000000 && compatVsn <= 0x120C0000) //18.0.0.0 - 18.12.0.0
+            || (compatVsn >= 0x13000000 && compatVsn <= 0x13090000)) //19.0.0.0 - 19.9.0.0
+            version = compatVsn;
 
         if (oracleAnalyzer->version == 0) {
             oracleAnalyzer->version = version;

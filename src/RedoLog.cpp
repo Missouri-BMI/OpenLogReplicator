@@ -91,13 +91,13 @@ namespace OpenLogReplicator {
             memcpy(SID, reader->headerBuffer + reader->blockSize + 28, 8); SID[8] = 0;
 
             oracleAnalyzer->dumpStream << "DUMP OF REDO FROM FILE '" << path << "'" << endl;
-            if (oracleAnalyzer->version >= 0x12200)
+            if (oracleAnalyzer->version >= REDO_VERSION_12_2)
                 oracleAnalyzer->dumpStream << " Container ID: 0" << endl << " Container UID: 0" << endl;
             oracleAnalyzer->dumpStream << " Opcodes *.*" << endl;
-            if (oracleAnalyzer->version >= 0x12200)
+            if (oracleAnalyzer->version >= REDO_VERSION_12_2)
                 oracleAnalyzer->dumpStream << " Container ID: 0" << endl << " Container UID: 0" << endl;
             oracleAnalyzer->dumpStream << " RBAs: 0x000000.00000000.0000 thru 0xffffffff.ffffffff.ffff" << endl;
-            if (oracleAnalyzer->version < 0x12200)
+            if (oracleAnalyzer->version < REDO_VERSION_12_2)
                 oracleAnalyzer->dumpStream << " SCNs: scn: 0x0000.00000000 thru scn: 0xffff.ffffffff" << endl;
             else
                 oracleAnalyzer->dumpStream << " SCNs: scn: 0x0000000000000000 thru scn: 0xffffffffffffffff" << endl;
@@ -147,7 +147,7 @@ namespace OpenLogReplicator {
             typesum chSum = oracleAnalyzer->read16(reader->headerBuffer + reader->blockSize + 14);
             typesum chSum2 = reader->calcChSum(reader->headerBuffer + reader->blockSize, reader->blockSize);
 
-            if (oracleAnalyzer->version < 0x12200) {
+            if (oracleAnalyzer->version < REDO_VERSION_12_2) {
                 oracleAnalyzer->dumpStream <<
                         " resetlogs count: 0x" << hex << reader->resetlogsRead << " scn: " << PRINTSCN48(resetlogsScn) << " (" << dec << resetlogsScn << ")" << endl <<
                         " prev resetlogs count: 0x" << hex << prevResetlogsCnt << " scn: " << PRINTSCN48(prevResetlogsScn) << " (" << dec << prevResetlogsScn << ")" << endl <<
@@ -210,7 +210,7 @@ namespace OpenLogReplicator {
 
             oracleAnalyzer->dumpStream << " Miscellaneous flags: 0x" << hex << miscFlags << endl;
 
-            if (oracleAnalyzer->version >= 0x12200) {
+            if (oracleAnalyzer->version >= REDO_VERSION_12_2) {
                 uint32_t miscFlags2 = oracleAnalyzer->read32(reader->headerBuffer + reader->blockSize + 296);
                 oracleAnalyzer->dumpStream << " Miscellaneous second flags: 0x" << hex << miscFlags2 << endl;
             }
@@ -220,7 +220,7 @@ namespace OpenLogReplicator {
             typeSCN scn2 = oracleAnalyzer->readSCN(reader->headerBuffer + reader->blockSize + 440);
             uint8_t zeroBlocks = reader->headerBuffer[reader->blockSize + 206];
             uint8_t formatId = reader->headerBuffer[reader->blockSize + 207];
-            if (oracleAnalyzer->version < 0x12200)
+            if (oracleAnalyzer->version < REDO_VERSION_12_2)
                 oracleAnalyzer->dumpStream << " Thread internal enable indicator: thr: " << dec << thr << "," <<
                         " seq: " << dec << seq2 <<
                         " scn: " << PRINTSCN48(scn2) << endl <<
@@ -284,7 +284,7 @@ namespace OpenLogReplicator {
             uint16_t thread = 1; //FIXME
             oracleAnalyzer->dumpStream << " " << endl;
 
-            if (oracleAnalyzer->version < 0x12100)
+            if (oracleAnalyzer->version < REDO_VERSION_12_1)
                 oracleAnalyzer->dumpStream << "REDO RECORD - Thread:" << thread <<
                         " RBA: 0x" << setfill('0') << setw(6) << hex << sequence << "." <<
                                     setfill('0') << setw(8) << hex << lwnMember->block << "." <<
@@ -315,14 +315,14 @@ namespace OpenLogReplicator {
             }
 
             if (headerLength == 68) {
-                if (oracleAnalyzer->version < 0x12200)
+                if (oracleAnalyzer->version < REDO_VERSION_12_2)
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN48(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
                 else
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN64(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
                 uint16_t lwnNst = oracleAnalyzer->read16(data + 26);
                 uint32_t lwnLen = oracleAnalyzer->read32(data + 32);
 
-                if (oracleAnalyzer->version < 0x12200)
+                if (oracleAnalyzer->version < REDO_VERSION_12_2)
                     oracleAnalyzer->dumpStream << "(LWN RBA: 0x" << setfill('0') << setw(6) << hex << sequence << "." <<
                                     setfill('0') << setw(8) << hex << lwnMember->block << "." <<
                                     setfill('0') << setw(4) << hex << lwnMember->pos <<
@@ -337,7 +337,7 @@ namespace OpenLogReplicator {
                         " NST: 0x" << setfill('0') << setw(4) << hex << lwnNst <<
                         " SCN: " << PRINTSCN64(lwnScn) << ")" << endl;
             } else {
-                if (oracleAnalyzer->version < 0x12200)
+                if (oracleAnalyzer->version < REDO_VERSION_12_2)
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN48(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
                 else
                     oracleAnalyzer->dumpStream << "SCN: " << PRINTSCN64(lwnMember->scn) << " SUBSCN:" << setfill(' ') << setw(3) << dec << lwnMember->subScn << " " << lwnTimestamp << endl;
@@ -364,7 +364,7 @@ namespace OpenLogReplicator {
             int16_t usn = (redoLogRecord[vectors].cls >= 15) ? (redoLogRecord[vectors].cls - 15) / 2 : -1;
 
             uint64_t fieldOffset;
-            if (oracleAnalyzer->version >= 0x12100) {
+            if (oracleAnalyzer->version >= REDO_VERSION_12_1) {
                 fieldOffset = 32;
                 redoLogRecord[vectors].flgRecord = oracleAnalyzer->read16(data + pos + 28);
                 redoLogRecord[vectors].conId = oracleAnalyzer->read16(data + pos + 24);
@@ -1128,9 +1128,9 @@ namespace OpenLogReplicator {
         }
 
         clock_t cEnd = clock();
-        double mySpeed = 0, myTime = 1000.0 * (cEnd-cStart) / CLOCKS_PER_SEC, suppLogPercent = 0.0;
+        double mySpeed = 0, myTime = 1000.0 * (cEnd - cStart) / CLOCKS_PER_SEC, suppLogPercent = 0.0;
         if (currentBlock != startBlock)
-            suppLogPercent = 100.0 * oracleAnalyzer->suppLogSize / ((currentBlock - startBlock)* reader->blockSize);
+            suppLogPercent = 100.0 * oracleAnalyzer->suppLogSize / ((currentBlock - startBlock) * reader->blockSize);
         if (myTime > 0)
             mySpeed = (currentBlock - startBlock) * reader->blockSize / 1024 / 1024 / myTime * 1000;
 

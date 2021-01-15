@@ -37,6 +37,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OracleColumn.h"
 #include "OracleObject.h"
 #include "OutputBuffer.h"
+#include "Reader.h"
 #include "RedoLogRecord.h"
 #include "RuntimeException.h"
 
@@ -1422,7 +1423,7 @@ namespace OpenLogReplicator {
             pos = 3;
 
             if ((redoLogRecord2->op & OP_ROWDEPENDENCIES) != 0) {
-                if (oracleAnalyzer->version < 0x12200)
+                if (oracleAnalyzer->version < REDO_VERSION_12_2)
                     pos += 6;
                 else
                     pos += 8;
@@ -1481,7 +1482,7 @@ namespace OpenLogReplicator {
             pos = 3;
 
             if ((redoLogRecord1->op & OP_ROWDEPENDENCIES) != 0) {
-                if (oracleAnalyzer->version < 0x12200)
+                if (oracleAnalyzer->version < REDO_VERSION_12_2)
                     pos += 6;
                 else
                     pos += 8;
