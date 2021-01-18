@@ -938,7 +938,7 @@ namespace OpenLogReplicator {
         }
         INFO("processing redo log: " << *this);
         uint64_t currentBlock = lwnConfirmedBlock, blockPos = 16, bufferPos = 0, startBlock = lwnConfirmedBlock;
-        uint64_t curBufferStart = 0, curBufferEnd = 0, curRet, curStatus;
+        uint64_t tmpBufferStart = 0;
         LwnMember *lwnMember;
 
         oracleAnalyzer->suppLogSize = 0;
@@ -960,11 +960,10 @@ namespace OpenLogReplicator {
         {
             unique_lock<mutex> lck(oracleAnalyzer->mtx);
             reader->status = READER_STATUS_READ;
-            curBufferEnd = reader->bufferEnd;
             oracleAnalyzer->readerCond.notify_all();
             oracleAnalyzer->sleepingCond.notify_all();
         }
-        curBufferStart = reader->bufferStart;
+        tmpBufferStart = reader->bufferStart;
         bufferPos = (currentBlock * reader->blockSize) % DISK_BUFFER_SIZE;
         uint64_t recordLength4 = 0, recordPos = 0, recordLeftToCopy = 0, lwnEndBlock = lwnConfirmedBlock;
         uint16_t lwnNum = 0, lwnNumMax = 0, lwnNumCnt = 0;
@@ -972,8 +971,8 @@ namespace OpenLogReplicator {
 
         while (!oracleAnalyzer->shutdown) {
             //there is some work to do
-            while (curBufferStart < curBufferEnd) {
-                //TRACE(TRACE2_LWN, "LWN block: " << dec << (curBufferStart / reader->blockSize) << " left: " << dec << recordLeftToCopy << ", last length: "
+            while (tmpBufferStart < reader->bufferEnd) {
+                //TRACE(TRACE2_LWN, "LWN block: " << dec << (tmpBufferStart / reader->blockSize) << " left: " << dec << recordLeftToCopy << ", last length: "
                 //            << recordLength4);
 
                 blockPos = 16;
@@ -992,7 +991,7 @@ namespace OpenLogReplicator {
                         lwnEndBlock = lwnStartBlock + lwnLength;
                         TRACE(TRACE2_LWN, "LWN: at: " << dec << lwnStartBlock << " length: " << lwnLength << " chk: " << dec << lwnNum << " max: " << lwnNumMax);
                     } else {
-                        RUNTIME_FAIL("did not find LWN at pos: " << dec << curBufferStart);
+                        RUNTIME_FAIL("did not find LWN at pos: " << dec << tmpBufferStart);
                     }
                 }
 
@@ -1091,15 +1090,14 @@ namespace OpenLogReplicator {
                     lwnConfirmedBlock = currentBlock;
                 }
 
-                curBufferStart += reader->blockSize;
+                tmpBufferStart += reader->blockSize;
                 bufferPos += reader->blockSize;
                 if (bufferPos == DISK_BUFFER_SIZE)
                     bufferPos = 0;
 
-                if (curBufferStart - reader->bufferStart > DISK_BUFFER_SIZE / 16) {
+                if (tmpBufferStart - reader->bufferStart > DISK_BUFFER_SIZE / 16) {
                     unique_lock<mutex> lck(oracleAnalyzer->mtx);
-                    reader->bufferStart = curBufferStart;
-                    curBufferEnd = reader->bufferEnd;
+                    reader->bufferStart = tmpBufferStart;
                     if (reader->status == READER_STATUS_READ) {
                         oracleAnalyzer->readerCond.notify_all();
                     }
@@ -1108,19 +1106,16 @@ namespace OpenLogReplicator {
 
             {
                 unique_lock<mutex> lck(oracleAnalyzer->mtx);
-                curBufferEnd = reader->bufferEnd;
-                curStatus = reader->status;
-                curRet = reader->ret;
-                if (reader->bufferStart < curBufferStart) {
-                    reader->bufferStart = curBufferStart;
+                if (reader->bufferStart < tmpBufferStart) {
+                    reader->bufferStart = tmpBufferStart;
                     if (reader->status == READER_STATUS_READ) {
                         oracleAnalyzer->readerCond.notify_all();
                     }
                 }
 
                 //all work done
-                if (curBufferStart == curBufferEnd) {
-                    if (curRet == REDO_FINISHED || curRet == REDO_OVERWRITTEN || curStatus == READER_STATUS_SLEEPING)
+                if (tmpBufferStart == reader->bufferEnd) {
+                    if (reader->ret == REDO_FINISHED || reader->ret == REDO_OVERWRITTEN || reader->status == READER_STATUS_SLEEPING)
                         break;
                     oracleAnalyzer->analyzerCond.wait(lck);
                 }
@@ -1143,7 +1138,7 @@ namespace OpenLogReplicator {
         if (oracleAnalyzer->dumpRedoLog >= 1 && oracleAnalyzer->dumpStream.is_open())
             oracleAnalyzer->dumpStream.close();
 
-        return curRet;
+        return reader->ret;
     }
 
     ostream& operator<<(ostream& os, const RedoLog& ors) {
