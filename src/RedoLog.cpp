@@ -58,6 +58,7 @@ namespace OpenLogReplicator {
             lwnScn(0),
             lwnRecords(0),
             lwnStartBlock(0),
+            shutdown(false),
             group(group),
             path(path),
             sequence(0),
@@ -741,14 +742,13 @@ namespace OpenLogReplicator {
             transaction->isRollback = true;
 
         if (transaction->commitScn > oracleAnalyzer->scn) {
-            if (transaction->shutdown) {
-                stopMain();
-            } else {
-                if (transaction->isBegin)
-                    transaction->flush();
-                else {
-                    INFO("skipping transaction with no begin: " << *transaction);
-                }
+            if (transaction->shutdown)
+                shutdown = true;
+
+            if (transaction->isBegin)
+                transaction->flush();
+            else {
+                INFO("skipping transaction with no begin: " << *transaction);
             }
         } else {
             INFO("skipping transaction already committed: " << *transaction);
@@ -759,7 +759,7 @@ namespace OpenLogReplicator {
     }
 
     void RedoLog::appendToTransaction(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2) {
-        bool shutdown = false;
+        bool shutdownFound = false;
         TRACE(TRACE2_DUMP, *redoLogRecord1);
         TRACE(TRACE2_DUMP, *redoLogRecord2);
 
@@ -812,7 +812,7 @@ namespace OpenLogReplicator {
         long opCodeLong = (redoLogRecord1->opCode << 16) | redoLogRecord2->opCode;
         if (redoLogRecord1->object != nullptr && redoLogRecord1->object->options == 1 && opCodeLong == 0x05010B02) {
             INFO("found shutdown command in events table");
-            shutdown = true;
+            shutdownFound = true;
         }
 
         switch (opCodeLong) {
@@ -852,7 +852,7 @@ namespace OpenLogReplicator {
                     }
                 }
                 transaction->add(redoLogRecord1, redoLogRecord2);
-                transaction->shutdown = shutdown;
+                transaction->shutdown = shutdownFound;
             }
             break;
 
@@ -1095,6 +1095,9 @@ namespace OpenLogReplicator {
                 if (bufferPos == DISK_BUFFER_SIZE)
                     bufferPos = 0;
 
+                if (shutdown)
+                    stopMain();
+
                 if (tmpBufferStart - reader->bufferStart > DISK_BUFFER_SIZE / 16) {
                     unique_lock<mutex> lck(oracleAnalyzer->mtx);
                     reader->bufferStart = tmpBufferStart;
@@ -1115,6 +1118,9 @@ namespace OpenLogReplicator {
 
                 //all work done
                 if (tmpBufferStart == reader->bufferEnd) {
+                    if (reader->ret == REDO_FINISHED && nextScn == ZERO_SCN && reader->nextScn != 0)
+                        nextScn = reader->nextScn;
+
                     if (reader->ret == REDO_FINISHED || reader->ret == REDO_OVERWRITTEN || reader->status == READER_STATUS_SLEEPING)
                         break;
                     oracleAnalyzer->analyzerCond.wait(lck);

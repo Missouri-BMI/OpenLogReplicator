@@ -137,6 +137,7 @@ typedef uint64_t typeunicode;
 #define TRACE2_ARCHIVE_LIST                     0x0000800
 #define TRACE2_SCHEMA_LIST                      0x0001000
 #define TRACE2_KAFKA                            0x0002000
+#define TRACE2_SAVEPOINTS                       0x0004000
 
 #define REDO_FLAGS_ARCH_ONLY                    0x0000001
 #define REDO_FLAGS_SCHEMALESS                   0x0000002
@@ -196,7 +197,7 @@ typedef uint64_t typeunicode;
 #define FULL_(x)                                {if (trace >= TRACE_FULL){stringstream s; s << "FULL: " << x << endl; cerr << s.str();} }
 #define TRACE_(t,x)                             {if ((trace2 & (t)) != 0) {stringstream s; s << "TRACE: " << x << endl; cerr << s.str();} }
 #define TYPEINTXLEN                             4
-#define TYPEINTXLENDIGITS                       77
+#define TYPEINTXDIGITS                          77
 
 using namespace std;
 
@@ -207,7 +208,7 @@ namespace OpenLogReplicator {
     class uintX_t {
     private:
         uint64_t data[TYPEINTXLEN];
-        static uintX_t BASE10[TYPEINTXLENDIGITS][10];
+        static uintX_t BASE10[TYPEINTXDIGITS][10];
     public:
         static void initializeBASE10(void);
         uintX_t& operator+=(const uintX_t &val);

@@ -575,7 +575,8 @@ namespace OpenLogReplicator {
                             }
                         }
 
-                        writeSavepoint(redo->nextScn - 1);
+                        if (redo->nextScn != ZERO_SCN)
+                            writeSavepoint(redo->nextScn - 1);
                         ++sequence;
                     }
                 }
@@ -642,7 +643,8 @@ namespace OpenLogReplicator {
                         RUNTIME_FAIL("archive log processing returned: " << dec << ret);
                     }
 
-                    writeSavepoint(redo->nextScn - 1);
+                    if (redo->nextScn != ZERO_SCN)
+                        writeSavepoint(redo->nextScn - 1);
                     ++sequence;
                     archiveRedoQueue.pop();
                     delete redo;
@@ -962,7 +964,7 @@ namespace OpenLogReplicator {
         if ((flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return;
 
-        FULL_("savepoint - writing scn: " << dec << savepointScn);
+        TRACE_(TRACE2_SAVEPOINTS, "savepoint - writing scn: " << dec << savepointScn);
         string fileName = savepointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
