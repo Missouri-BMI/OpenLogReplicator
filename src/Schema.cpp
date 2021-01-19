@@ -606,7 +606,6 @@ namespace OpenLogReplicator {
             const Value& nullJSON = getJSONfieldV(fileName, sysCol[i], "null");
             uint64_t null = nullJSON.GetInt64();
 
-            uintX_t property;
             const Value& propertyJSON = getJSONfieldV(fileName, sysCol[i], "property");
             if (!propertyJSON.IsArray() || propertyJSON.Size() < 2) {
                 CONFIG_FAIL("bad JSON in " << fileName << ", property should be an array");
@@ -767,7 +766,6 @@ namespace OpenLogReplicator {
             const Value& flagsJSON = getJSONfieldV(fileName, sysTab[i], "flags");
             uint64_t flags = flagsJSON.GetUint64();
 
-            uintX_t property;
             const Value& propertyJSON = getJSONfieldV(fileName, sysTab[i], "property");
             if (!propertyJSON.IsArray() || propertyJSON.Size() < 2) {
                 CONFIG_FAIL("bad JSON in " << fileName << ", property should be an array");
