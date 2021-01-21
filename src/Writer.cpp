@@ -323,6 +323,7 @@ namespace OpenLogReplicator {
     }
 
     void Writer::writeCheckpoint(bool force) {
+        TRACE(TRACE2_SAVEPOINTS, "checkpoint scn: " << dec << checkpointScn << " confirmed scn: " << confirmedScn);
         if (checkpointScn == confirmedScn)
             return;
 
