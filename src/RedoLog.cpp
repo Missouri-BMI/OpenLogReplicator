@@ -1014,7 +1014,7 @@ namespace OpenLogReplicator {
                         if (recordLength4 > 0) {
                             uint64_t *length = (uint64_t*)(lwnChunks[lwnAllocated - 1]);
 
-                            if ((*length + sizeof(struct LwnMember) + recordLength4 + 7) & 0xFFFFFFF8 > MEMORY_CHUNK_SIZE_MB * 1024 * 1024) {
+                            if (((*length + sizeof(struct LwnMember) + recordLength4 + 7) & 0xFFFFFFF8) > MEMORY_CHUNK_SIZE_MB * 1024 * 1024) {
                                 if (lwnAllocated == MAX_LWN_CHUNKS) {
                                     RUNTIME_FAIL("all " << dec << MAX_LWN_CHUNKS << " LWN buffers allocated");
                                 }
@@ -1024,7 +1024,7 @@ namespace OpenLogReplicator {
                                 *length = sizeof(uint64_t);
                             }
 
-                            if ((*length + sizeof(struct LwnMember) + recordLength4 + 7) & 0xFFFFFFF8 > MEMORY_CHUNK_SIZE_MB * 1024 * 1024) {
+                            if (((*length + sizeof(struct LwnMember) + recordLength4 + 7) & 0xFFFFFFF8) > MEMORY_CHUNK_SIZE_MB * 1024 * 1024) {
                                 RUNTIME_FAIL("Too big redo log record, length: " << recordLength4);
                             }
 
