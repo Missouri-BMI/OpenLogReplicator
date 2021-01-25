@@ -230,6 +230,22 @@ int main(int argc, char **argv) {
             }
 
             //optional
+            uint64_t readBufferMax = memoryMaxMb / 4 / MEMORY_CHUNK_SIZE_MB;
+            if (readBufferMax > 256 / MEMORY_CHUNK_SIZE_MB)
+                readBufferMax = 256 / MEMORY_CHUNK_SIZE_MB;
+
+            if (sourceJSON.HasMember("read-buffer-max-mb")) {
+                const Value& readBufferMaxMbJSON = sourceJSON["read-buffer-max-mb"];
+                readBufferMax = readBufferMaxMbJSON.GetUint64() / MEMORY_CHUNK_SIZE_MB;
+                if (readBufferMax * MEMORY_CHUNK_SIZE_MB > memoryMaxMb) {
+                    CONFIG_FAIL("bad JSON, \"read-buffer-max-mb\" value can't be greater than \"memory-max-mb\" value");
+                }
+                if (readBufferMax <= 1) {
+                    CONFIG_FAIL("bad JSON, \"read-buffer-max-mb\" value should be at least " << dec << MEMORY_CHUNK_SIZE_MB * 2);
+                }
+            }
+
+            //optional
             uint64_t redoReadSleep = 10000;
             if (sourceJSON.HasMember("redo-read-sleep")) {
                 const Value& redoReadSleepJSON = sourceJSON["redo-read-sleep"];
@@ -244,7 +260,7 @@ int main(int argc, char **argv) {
             }
 
             //optional
-            uint64_t redoVerifyDelay = 50000;
+            uint64_t redoVerifyDelay = 500000;
             if (sourceJSON.HasMember("redo-verify-delay")) {
                 const Value& redoVerifyDelayJSON = sourceJSON["redo-verify-delay"];
                 redoVerifyDelay = redoVerifyDelayJSON.GetUint();
@@ -402,7 +418,7 @@ int main(int argc, char **argv) {
 
                 oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
                         trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                        memoryMinMb, memoryMaxMb, logArchiveFormat, savepointPath, user, password, server, isStandby);
+                        memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, user, password, server, isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -446,7 +462,7 @@ int main(int argc, char **argv) {
 
                 oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace, trace2,
                         dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb,
-                        memoryMaxMb, logArchiveFormat, savepointPath);
+                        memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -501,8 +517,8 @@ int main(int argc, char **argv) {
 
                 oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
                         trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                        memoryMinMb, memoryMaxMb, logArchiveFormat, savepointPath, user, password, server, userASM, passwordASM,
-                        serverASM, isStandby);
+                        memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, user, password, server, userASM,
+                        passwordASM, serverASM, isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -538,7 +554,7 @@ int main(int argc, char **argv) {
 
                  oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
                          trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                         memoryMinMb, memoryMaxMb, logArchiveFormat, savepointPath, conId);
+                         memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, conId);
 
                  if (oracleAnalyzer == nullptr) {
                      RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzerBatch) << " bytes memory (for: oracle analyzer)");

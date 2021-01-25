@@ -32,6 +32,7 @@
       "savepoint-path": "savepoint",
       "memory-min-mb": 64,
       "memory-max-mb": 1024,
+      "read-buffer-max-mb": 256,
       "redo-read-sleep": 10000,
       "arch-read-sleep": 10000000,
       "redo-verify-delay": 50000,
