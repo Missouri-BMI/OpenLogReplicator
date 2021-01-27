@@ -11,6 +11,7 @@
       "reader": {
         "type": "online", 
         "path-mapping": ["/db/fra", "/opt/fast-recovery-area"],
+        "redo-copy-path": "copy",
         "user": "user1",
         "password": "Password1",
         "server": "//host:1521/SERVICE",

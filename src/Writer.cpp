@@ -180,7 +180,7 @@ namespace OpenLogReplicator {
     }
 
     void *Writer::run(void) {
-        TRACE(TRACE2_THREADS, "WRITER (" << hex << this_thread::get_id() << ") START");
+        TRACE(TRACE2_THREADS, "THREADS: WRITER (" << hex << this_thread::get_id() << ") START");
 
         INFO("Writer is starting: " << getName());
 
@@ -310,20 +310,20 @@ namespace OpenLogReplicator {
                 }
             }
 
-        } catch(ConfigurationException &ex) {
+        } catch (ConfigurationException &ex) {
             stopMain();
-        } catch(RuntimeException &ex) {
+        } catch (RuntimeException &ex) {
             stopMain();
         }
 
         INFO("Writer is stopping: " << getName() << ", max queue size: " << dec << maxQueueSize);
 
-        TRACE(TRACE2_THREADS, "WRITER (" << hex << this_thread::get_id() << ") STOP");
+        TRACE(TRACE2_THREADS, "THREADS: WRITER (" << hex << this_thread::get_id() << ") STOP");
         return 0;
     }
 
     void Writer::writeCheckpoint(bool force) {
-        TRACE(TRACE2_SAVEPOINTS, "checkpoint scn: " << dec << checkpointScn << " confirmed scn: " << confirmedScn);
+        TRACE(TRACE2_SAVEPOINTS, "SAVEPOINT: checkpoint scn: " << dec << checkpointScn << " confirmed scn: " << confirmedScn);
         if (checkpointScn == confirmedScn)
             return;
 

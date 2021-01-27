@@ -42,7 +42,7 @@ namespace OpenLogReplicator {
     OracleAnalyzer::OracleAnalyzer(OutputBuffer *outputBuffer, const char *alias, const char *database, uint64_t trace, uint64_t trace2,
             uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
             uint64_t archReadSleep, uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
-            const char *logArchiveFormat, const char *savepointPath) :
+            const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath) :
         Thread(alias),
         sequence(0),
         suppLogDbPrimary(0),
@@ -60,6 +60,7 @@ namespace OpenLogReplicator {
         dbBlockChecksum(""),
         logArchiveFormat(logArchiveFormat),
         savepointPath(savepointPath),
+        redoCopyPath(redoCopyPath),
         archReader(nullptr),
         waitingForWriter(false),
         context(""),
@@ -452,7 +453,7 @@ namespace OpenLogReplicator {
     }
 
     void *OracleAnalyzer::run(void) {
-        TRACE_(TRACE2_THREADS, "ANALYZER (" << hex << this_thread::get_id() << ") START");
+        TRACE_(TRACE2_THREADS, "THREADS: ANALYZER (" << hex << this_thread::get_id() << ") START");
 
         try {
             initialize();
@@ -514,18 +515,18 @@ namespace OpenLogReplicator {
                 //ONLINE REDO LOGS READ
                 //
                 if ((flags & REDO_FLAGS_ARCH_ONLY) == 0) {
-                    TRACE_(TRACE2_REDO, "checking online redo logs");
+                    TRACE_(TRACE2_REDO, "REDO: checking online redo logs");
                     updateOnlineLogs();
 
                     while (!shutdown) {
                         redo = nullptr;
-                        TRACE_(TRACE2_REDO, "searching online redo log for seq: " << dec << sequence);
+                        TRACE_(TRACE2_REDO, "REDO: searching online redo log for seq: " << dec << sequence);
 
                         //find the candidate to read
                         for (RedoLog *redoLog : onlineRedoSet) {
                             if (redoLog->sequence == sequence)
                                 redo = redoLog;
-                            TRACE_(TRACE2_REDO, redoLog->path << " is " << dec << redoLog->sequence);
+                            TRACE_(TRACE2_REDO, "REDO: " << redoLog->path << " is " << dec << redoLog->sequence);
                         }
 
                         //keep reading online redo logs while it is possible
@@ -587,12 +588,12 @@ namespace OpenLogReplicator {
                 //
                 if (shutdown)
                     break;
-                TRACE_(TRACE2_REDO, "checking archive redo logs");
+                TRACE_(TRACE2_REDO, "REDO: checking archive redo logs");
                 archGetLog(this);
 
                 if (archiveRedoQueue.empty()) {
                     if ((flags & REDO_FLAGS_ARCH_ONLY) != 0) {
-                        TRACE_(TRACE2_ARCHIVE_LIST, "archived redo log missing for seq: " << dec << sequence << ", sleeping");
+                        TRACE_(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: archived redo log missing for seq: " << dec << sequence << ", sleeping");
                         usleep(archReadSleep);
                     } else {
                         RUNTIME_FAIL("couldn't find archive log for seq: " << dec << sequence);
@@ -602,7 +603,7 @@ namespace OpenLogReplicator {
                 while (!archiveRedoQueue.empty() && !shutdown) {
                     RedoLog *redoPrev = redo;
                     redo = archiveRedoQueue.top();
-                    TRACE_(TRACE2_REDO, "searching archived redo log for seq: " << dec << sequence);
+                    TRACE_(TRACE2_REDO, "REDO: searching archived redo log for seq: " << dec << sequence);
 
                     //when no checkpoint exists start processing from first file
                     if (sequence == 0)
@@ -661,9 +662,9 @@ namespace OpenLogReplicator {
                 if (!logsProcessed)
                     usleep(redoReadSleep);
             }
-        } catch(ConfigurationException &ex) {
+        } catch (ConfigurationException &ex) {
             stopMain();
-        } catch(RuntimeException &ex) {
+        } catch (RuntimeException &ex) {
             stopMain();
         }
 
@@ -675,7 +676,7 @@ namespace OpenLogReplicator {
         INFO_("Oracle analyzer for: " << database << " is shut down, allocated at most " << dec <<
                 (memoryChunksHWM * MEMORY_CHUNK_SIZE_MB) << "MB memory, max disk read buffer: " << (buffersMax * MEMORY_CHUNK_SIZE_MB) << "MB");
 
-        TRACE_(TRACE2_THREADS, "ANALYZER (" << hex << this_thread::get_id() << ") STOP");
+        TRACE_(TRACE2_THREADS, "THREADS: ANALYZER (" << hex << this_thread::get_id() << ") STOP");
         return 0;
     }
 
@@ -868,7 +869,7 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzer::addPathMapping(const char* source, const char* target) {
-        TRACE_(TRACE2_FILE, "added mapping [" << source << "] -> [" << target << "]");
+        TRACE_(TRACE2_FILE, "FILE: added mapping [" << source << "] -> [" << target << "]");
         string sourceMaping = source, targetMapping = target;
         pathMapping.push_back(sourceMaping);
         pathMapping.push_back(targetMapping);
@@ -969,7 +970,7 @@ namespace OpenLogReplicator {
         if ((flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return;
 
-        TRACE_(TRACE2_SAVEPOINTS, "savepoint - writing scn: " << dec << savepointScn);
+        TRACE_(TRACE2_SAVEPOINTS, "SAVEPOINT: writing scn: " << dec << savepointScn);
         string fileName = savepointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
@@ -1088,7 +1089,7 @@ namespace OpenLogReplicator {
         }
 
         string mappedPath = oracleAnalyzer->applyMapping(oracleAnalyzer->dbRecoveryFileDest + "/" + oracleAnalyzer->database + "/archivelog");
-        TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << mappedPath);
+        TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << mappedPath);
 
         DIR *dir;
         if ((dir = opendir(mappedPath.c_str())) == nullptr) {
@@ -1115,7 +1116,7 @@ namespace OpenLogReplicator {
             if (oracleAnalyzer->lastCheckedDay.length() > 0 && oracleAnalyzer->lastCheckedDay.compare(ent->d_name) > 0)
                 continue;
 
-            TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << mappedPath << "/" << ent->d_name);
+            TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << mappedPath << "/" << ent->d_name);
 
             string mappedPathWithFile = mappedPath + "/" + ent->d_name;
             DIR *dir2;
@@ -1130,11 +1131,11 @@ namespace OpenLogReplicator {
                     continue;
 
                 string fileName = mappedPath + "/" + ent->d_name + "/" + ent2->d_name;
-                TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << fileName);
+                TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << fileName);
 
                 uint64_t sequence = getSequenceFromFileName(oracleAnalyzer, ent2->d_name);
 
-                TRACE(TRACE2_ARCHIVE_LIST, "found seq: " << sequence);
+                TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: found seq: " << sequence);
 
                 if (sequence == 0 || sequence < oracleAnalyzer->sequence)
                     continue;
@@ -1160,14 +1161,14 @@ namespace OpenLogReplicator {
         if (newLastCheckedDay.length() != 0 &&
                 (oracleAnalyzer->lastCheckedDay.length() == 0 ||
                         (oracleAnalyzer->lastCheckedDay.length() > 0 && oracleAnalyzer->lastCheckedDay.compare(newLastCheckedDay) < 0))) {
-            TRACE(TRACE2_ARCHIVE_LIST, "updating last checked day to: " << newLastCheckedDay);
+            TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: updating last checked day to: " << newLastCheckedDay);
             oracleAnalyzer->lastCheckedDay = newLastCheckedDay;
         }
     }
 
     void OracleAnalyzer::archGetLogList(OracleAnalyzer *oracleAnalyzer) {
         for (string &mappedPath : oracleAnalyzer->redoLogsBatch) {
-            TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << mappedPath);
+            TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << mappedPath);
 
             struct stat fileStat;
             if (stat(mappedPath.c_str(), &fileStat)) {
@@ -1177,7 +1178,7 @@ namespace OpenLogReplicator {
 
             //single file
             if (!S_ISDIR(fileStat.st_mode)) {
-                TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << mappedPath);
+                TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << mappedPath);
 
                 //getting file name from path
                 const char *fileName = mappedPath.c_str();
@@ -1189,7 +1190,7 @@ namespace OpenLogReplicator {
                 }
                 uint64_t sequence = getSequenceFromFileName(oracleAnalyzer, fileName + j);
 
-                TRACE(TRACE2_ARCHIVE_LIST, "found seq: " << sequence);
+                TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: found seq: " << sequence);
 
                 if (sequence == 0 || sequence < oracleAnalyzer->sequence)
                     continue;
@@ -1216,11 +1217,11 @@ namespace OpenLogReplicator {
                         continue;
 
                     string fileName = mappedPath + "/" + ent->d_name;
-                    TRACE(TRACE2_ARCHIVE_LIST, "checking path: " << fileName);
+                    TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: checking path: " << fileName);
 
                     uint64_t sequence = getSequenceFromFileName(oracleAnalyzer, ent->d_name);
 
-                    TRACE(TRACE2_ARCHIVE_LIST, "found seq: " << sequence);
+                    TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: found seq: " << sequence);
 
                     if (sequence == 0 || sequence < oracleAnalyzer->sequence)
                         continue;

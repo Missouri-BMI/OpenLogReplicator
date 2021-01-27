@@ -369,7 +369,7 @@ namespace OpenLogReplicator {
         if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return false;
 
-        TRACE(TRACE2_SCHEMA_LIST, "searching for previous schema on: " << oracleAnalyzer->savepointPath);
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: searching for previous schema on: " << oracleAnalyzer->savepointPath);
         DIR *dir;
         if ((dir = opendir(oracleAnalyzer->savepointPath.c_str())) == nullptr) {
             RUNTIME_FAIL("can't access directory: " << oracleAnalyzer->savepointPath);
@@ -384,7 +384,7 @@ namespace OpenLogReplicator {
 
             struct stat fileStat;
             string fileName = ent->d_name;
-            TRACE(TRACE2_SCHEMA_LIST, "found previous schema: " << oracleAnalyzer->savepointPath << "/" << fileName );
+            TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: found previous schema: " << oracleAnalyzer->savepointPath << "/" << fileName );
 
             string fullName = oracleAnalyzer->savepointPath + "/" + ent->d_name;
             if (stat(fullName.c_str(), &fileStat)) {
@@ -526,7 +526,7 @@ namespace OpenLogReplicator {
 
             dictSysUserAdd(rowId, user, name, spare1);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.USER$: " << dec << sysUser.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.USER$: " << dec << sysUser.Size());
 
         //SYS.OBJ$
         const Value& sysObj = getJSONfieldD(fileName, document, "sys-obj");
@@ -558,7 +558,7 @@ namespace OpenLogReplicator {
 
             dictSysObjAdd(rowId, owner, obj, dataObj, type, name, flags);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.OBJ$: " << dec << sysObj.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.OBJ$: " << dec << sysObj.Size());
 
         //SYS.COL$
         const Value& sysCol = getJSONfieldD(fileName, document, "sys-col");
@@ -615,7 +615,7 @@ namespace OpenLogReplicator {
 
             dictSysColAdd(rowId, obj, col, segCol, intCol, name, type, length, precision, scale, charsetForm, charsetId, null, property1, property2);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.COL$: " << dec << sysCol.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.COL$: " << dec << sysCol.Size());
 
         //SYS.CCOL$
         const Value& sysCCol = getJSONfieldD(fileName, document, "sys-ccol");
@@ -641,7 +641,7 @@ namespace OpenLogReplicator {
 
             dictSysCColAdd(rowId, con, intCol, obj, spare1);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.CCOL$: " << dec << sysCCol.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.CCOL$: " << dec << sysCCol.Size());
 
         //SYS.CDEF$
         const Value& sysCDef = getJSONfieldD(fileName, document, "sys-cdef");
@@ -664,7 +664,7 @@ namespace OpenLogReplicator {
 
             dictSysCDefAdd(rowId, con, obj, type);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.CDEF$: " << dec << sysCDef.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.CDEF$: " << dec << sysCDef.Size());
 
         //SYS.DEFERRED_STG$
         const Value& sysDeferredStg = getJSONfieldD(fileName, document, "sys-deferredstg");
@@ -684,7 +684,7 @@ namespace OpenLogReplicator {
 
             dictSysDeferredStgAdd(rowId, obj, flagsStg);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.DEFERRED_STG$: " << dec << sysDeferredStg.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.DEFERRED_STG$: " << dec << sysDeferredStg.Size());
 
         //SYS.ECOL$
         const Value& sysECol = getJSONfieldD(fileName, document, "sys-ecol");
@@ -707,7 +707,7 @@ namespace OpenLogReplicator {
 
             dictSysEColAdd(rowId, obj, colNum, guardId);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.ECOL$: " << dec << sysECol.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.ECOL$: " << dec << sysECol.Size());
 
         //SYS.SEG$
         const Value& sysSeg = getJSONfieldD(fileName, document, "sys-seg");
@@ -733,7 +733,7 @@ namespace OpenLogReplicator {
 
             dictSysSegAdd(rowId, file, block, ts, spare1);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.SEG$: " << dec << sysSeg.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.SEG$: " << dec << sysSeg.Size());
 
         //SYS.TAB$
         const Value& sysTab = getJSONfieldD(fileName, document, "sys-tab");
@@ -775,7 +775,7 @@ namespace OpenLogReplicator {
 
             dictSysTabAdd(rowId, obj, dataObj, ts, file, block, cluCols, flags, property1, property2);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.TAB$: " << dec << sysTab.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.TAB$: " << dec << sysTab.Size());
 
         //SYS.TABPART$
         const Value& sysTabPart = getJSONfieldD(fileName, document, "sys-tabpart");
@@ -798,7 +798,7 @@ namespace OpenLogReplicator {
 
             dictSysTabPartAdd(rowId, obj, dataObj, bo);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.TABPART$: " << dec << sysTabPart.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.TABPART$: " << dec << sysTabPart.Size());
 
         //SYS.TABCOMPART$
         const Value& sysTabComPart = getJSONfieldD(fileName, document, "sys-tabcompart");
@@ -821,7 +821,7 @@ namespace OpenLogReplicator {
 
             dictSysTabComPartAdd(rowId, obj, dataObj, bo);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.TABCOMPART$: " << dec << sysTabComPart.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.TABCOMPART$: " << dec << sysTabComPart.Size());
 
         //SYS.TABSUBPART$
         const Value& sysTabSubPart = getJSONfieldD(fileName, document, "sys-tabsubpart");
@@ -844,7 +844,7 @@ namespace OpenLogReplicator {
 
             dictSysTabComPartAdd(rowId, obj, dataObj, pObj);
         }
-        TRACE(TRACE2_SCHEMA_LIST, "SYS.TABSUBPART$: " << dec << sysTabSubPart.Size());
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: SYS.TABSUBPART$: " << dec << sysTabSubPart.Size());
 
         infile.close();
 
