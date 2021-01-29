@@ -45,6 +45,8 @@ namespace OpenLogReplicator {
         numBlocks(0),
         firstScn(ZERO_SCN),
         nextScn(ZERO_SCN),
+        sumRead(0),
+        sumTime(0),
         compatVsn(0),
         resetlogsHeader(0),
         activationHeader(0),
@@ -400,6 +402,8 @@ namespace OpenLogReplicator {
                     fileCopyDes = 0;
                 }
 
+                sumRead = 0;
+                sumTime = 0;
                 uint64_t tmpRet = reloadHeader();
                 if (tmpRet == REDO_OK) {
                     bufferStart = blockSize * 2;

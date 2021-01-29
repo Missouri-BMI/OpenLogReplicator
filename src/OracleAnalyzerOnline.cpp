@@ -572,12 +572,12 @@ namespace OpenLogReplicator {
             " WHERE"
             "   U.NAME LIKE UPPER(:j)");
 
-    OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database, uint64_t trace,
-            uint64_t trace2, uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
+    OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database,
+            uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
             uint64_t archReadSleep, uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
             const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath, const char *user, const char *password,
             const char *connectString, bool isStandby) :
-                    OracleAnalyzer(outputBuffer, alias, database, trace, trace2, dumpRedoLog, dumpRawData, flags, disableChecks,
+                    OracleAnalyzer(outputBuffer, alias, database, dumpRedoLog, dumpRawData, flags, disableChecks,
                     redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat,
                     savepointPath, redoCopyPath),
             isStandby(isStandby),
@@ -622,7 +622,7 @@ namespace OpenLogReplicator {
 
         {
             DatabaseStatement stmt(conn);
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_DATABASE_INFORMATION);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_DATABASE_INFORMATION);
             stmt.createStatement(SQL_GET_DATABASE_INFORMATION);
             uint64_t logMode; stmt.defineUInt64(1, logMode);
             uint64_t supplementalLogMin; stmt.defineUInt64(2, supplementalLogMin);
@@ -637,17 +637,17 @@ namespace OpenLogReplicator {
 
             if (stmt.executeQuery()) {
                 if (logMode == 0) {
-                    RUNTIME_FAIL("database not in ARCHIVELOG mode" << endl <<
-                            "HINT run: SHUTDOWN IMMEDIATE;" << endl <<
-                            "HINT run: STARTUP MOUNT;" << endl <<
-                            "HINT run: ALTER DATABASE ARCHIVELOG;" << endl <<
-                            "HINT run: ALTER DATABASE OPEN;");
+                    WARNING("HINT run: SHUTDOWN IMMEDIATE;");
+                    WARNING("HINT run: STARTUP MOUNT;");
+                    WARNING("HINT run: ALTER DATABASE ARCHIVELOG;");
+                    WARNING("HINT run: ALTER DATABASE OPEN;");
+                    RUNTIME_FAIL("database not in ARCHIVELOG mode");
                 }
 
                 if (supplementalLogMin == 0) {
-                    RUNTIME_FAIL("SUPPLEMENTAL_LOG_DATA_MIN missing" << endl <<
-                            "HINT run: ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;" << endl <<
-                            "HINT run: ALTER SYSTEM ARCHIVE LOG CURRENT;");
+                    WARNING("HINT run: ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;");
+                    WARNING("HINT run: ALTER SYSTEM ARCHIVE LOG CURRENT;");
+                    RUNTIME_FAIL("SUPPLEMENTAL_LOG_DATA_MIN missing");
                 }
 
                 if (isBigEndian)
@@ -670,7 +670,7 @@ namespace OpenLogReplicator {
                 if (memcmp(bannerStr, "Oracle Database 11g", 19) != 0) {
                     version12 = true;
                     DatabaseStatement stmt2(conn);
-                    TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_CON_INFO);
+                    TRACE(TRACE2_SQL, "SQL: " << SQL_GET_CON_INFO);
                     stmt2.createStatement(SQL_GET_CON_INFO);
                     stmt2.defineUInt16(1, conId);
                     char conNameChar[81];
@@ -680,7 +680,7 @@ namespace OpenLogReplicator {
                 }
                 context = contextStr;
 
-                INFO_("version: " << dec << bannerStr << ", context: " << context << ", resetlogs: " << dec << resetlogs <<
+                INFO("version: " << dec << bannerStr << ", context: " << context << ", resetlogs: " << dec << resetlogs <<
                         ", activation: " << activation << ", con_id: " << conId << ", con_name: " << conName);
             } else {
                 RUNTIME_FAIL("trying to read SYS.V_$DATABASE");
@@ -714,8 +714,8 @@ namespace OpenLogReplicator {
 
         {
             DatabaseStatement stmt(conn);
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_LOGFILE_LIST << endl <<
-                    "PARAM1: " << isStandby);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_LOGFILE_LIST);
+            TRACE(TRACE2_SQL, "PARAM1: " << isStandby);
             stmt.createStatement(SQL_GET_LOGFILE_LIST);
             if (isStandby)
                 stmt.bindString(1, "STANDBY");
@@ -758,18 +758,18 @@ namespace OpenLogReplicator {
         if (startSequence > 0) {
             DatabaseStatement stmt(conn);
             if (isStandby) {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_SEQUENCE_STANDBY << endl <<
-                        "PARAM1: " << startSequence << endl <<
-                        "PARAM2: " << resetlogs << endl <<
-                        "PARAM3: " << activation << endl <<
-                        "PARAM4: " << startSequence);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_SEQUENCE_STANDBY);
+                TRACE(TRACE2_SQL, "PARAM1: " << startSequence);
+                TRACE(TRACE2_SQL, "PARAM2: " << resetlogs);
+                TRACE(TRACE2_SQL, "PARAM3: " << activation);
+                TRACE(TRACE2_SQL, "PARAM4: " << startSequence);
                 stmt.createStatement(SQL_GET_SCN_FROM_SEQUENCE_STANDBY);
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_SEQUENCE << endl <<
-                        "PARAM1: " << startSequence << endl <<
-                        "PARAM2: " << resetlogs << endl <<
-                        "PARAM3: " << activation << endl <<
-                        "PARAM4: " << startSequence);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_SEQUENCE);
+                TRACE(TRACE2_SQL, "PARAM1: " << startSequence);
+                TRACE(TRACE2_SQL, "PARAM2: " << resetlogs);
+                TRACE(TRACE2_SQL, "PARAM3: " << activation);
+                TRACE(TRACE2_SQL, "PARAM4: " << startSequence);
                 stmt.createStatement(SQL_GET_SCN_FROM_SEQUENCE);
             }
 
@@ -790,8 +790,8 @@ namespace OpenLogReplicator {
             if (isStandby) {
                 RUNTIME_FAIL("can't position by time for standby database");
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_TIME << endl <<
-                        "PARAM1: " << startTime);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_TIME);
+                TRACE(TRACE2_SQL, "PARAM1: " << startTime);
                 stmt.createStatement(SQL_GET_SCN_FROM_TIME);
             }
             stringstream ss;
@@ -807,8 +807,8 @@ namespace OpenLogReplicator {
             if (isStandby) {
                 RUNTIME_FAIL("can't position by relative time for standby database");
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_TIME_RELATIVE << endl <<
-                        "PARAM1: " << startTimeRel);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SCN_FROM_TIME_RELATIVE);
+                TRACE(TRACE2_SQL, "PARAM1: " << startTimeRel);
                 stmt.createStatement(SQL_GET_SCN_FROM_TIME_RELATIVE);
             }
 
@@ -825,7 +825,7 @@ namespace OpenLogReplicator {
         //NOW
         } else {
             DatabaseStatement stmt(conn);
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_DATABASE_SCN);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_DATABASE_SCN);
             stmt.createStatement(SQL_GET_DATABASE_SCN);
             stmt.defineUInt64(1, scn);
 
@@ -841,16 +841,16 @@ namespace OpenLogReplicator {
         initializeSchema();
 
         if (sequence == 0) {
-            FULL_("starting sequence not found - starting with new batch");
+            FULL("starting sequence not found - starting with new batch");
 
             DatabaseStatement stmt(conn);
             if (isStandby) {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SEQUENCE_FROM_SCN_STANDBY << endl <<
-                        "PARAM1: " << scn);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SEQUENCE_FROM_SCN_STANDBY);
+                TRACE(TRACE2_SQL, "PARAM1: " << scn);
                 stmt.createStatement(SQL_GET_SEQUENCE_FROM_SCN_STANDBY);
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SEQUENCE_FROM_SCN << endl <<
-                        "PARAM1: " << scn);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SEQUENCE_FROM_SCN);
+                TRACE(TRACE2_SQL, "PARAM1: " << scn);
                 stmt.createStatement(SQL_GET_SEQUENCE_FROM_SCN);
             }
             stmt.bindUInt64(1, scn);
@@ -861,7 +861,7 @@ namespace OpenLogReplicator {
             }
         }
 
-        FULL_("start SEQ: " << dec << sequence);
+        FULL("start SEQ: " << dec << sequence);
 
         if (!keepConnection)
             closeConnection();
@@ -870,7 +870,7 @@ namespace OpenLogReplicator {
     void OracleAnalyzerOnline::checkConnection(void) {
         while (!shutdown) {
             if (conn == nullptr) {
-                INFO_("connecting to Oracle instance of " << database << " to " << connectString);
+                INFO("connecting to Oracle instance of " << database << " to " << connectString);
 
                 try {
                     conn = new DatabaseConnection(env, user, password, connectString, false);
@@ -882,7 +882,7 @@ namespace OpenLogReplicator {
             if (conn != nullptr)
                 break;
 
-            WARNING_("cannot connect to database, retry in 5 sec.");
+            WARNING("cannot connect to database, retry in 5 sec.");
             sleep(5);
         }
     }
@@ -897,8 +897,8 @@ namespace OpenLogReplicator {
     string OracleAnalyzerOnline::getParameterValue(const char *parameter) {
         char value[4001];
         DatabaseStatement stmt(conn);
-        TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_PARAMETER << endl <<
-                "PARAM1: " << parameter);
+        TRACE(TRACE2_SQL, "SQL: " << SQL_GET_PARAMETER);
+        TRACE(TRACE2_SQL, "PARAM1: " << parameter);
         stmt.createStatement(SQL_GET_PARAMETER);
         stmt.bindString(1, parameter);
         stmt.defineString(1, value, sizeof(value));
@@ -913,8 +913,8 @@ namespace OpenLogReplicator {
     string OracleAnalyzerOnline::getPropertyValue(const char *property) {
         char value[4001];
         DatabaseStatement stmt(conn);
-        TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_PROPERTY << endl <<
-                "PARAM1: " << property);
+        TRACE(TRACE2_SQL, "SQL: " << SQL_GET_PROPERTY);
+        TRACE(TRACE2_SQL, "PARAM1: " << property);
         stmt.createStatement(SQL_GET_PROPERTY);
         stmt.bindString(1, property);
         stmt.defineString(1, value, sizeof(value));
@@ -931,17 +931,18 @@ namespace OpenLogReplicator {
             string query("SELECT 1 FROM " + tableName + " WHERE 0 = 1");
 
             DatabaseStatement stmt(conn);
-            TRACE_(TRACE2_SQL, "SQL: " << query);
+            TRACE(TRACE2_SQL, "SQL: " << query);
             stmt.createStatement(query.c_str());
             uint64_t dummy; stmt.defineUInt64(1, dummy);
             stmt.executeQuery();
         } catch (RuntimeException &ex) {
             if (conId > 0) {
-                RUNTIME_FAIL("grants missing" << endl <<
-                        "HINT run: ALTER SESSION SET CONTAINER = " << conName << ";" << endl <<
-                        "HINT run: GRANT SELECT ON " << tableName << " TO " << user << ";");
+                WARNING("HINT run: ALTER SESSION SET CONTAINER = " << conName << ";");
+                WARNING("HINT run: GRANT SELECT ON " << tableName << " TO " << user << ";");
+                RUNTIME_FAIL("grants missing");
             } else {
-                RUNTIME_FAIL("grants missing" << endl << "HINT run: GRANT SELECT ON " << tableName << " TO " << user << ";");
+                WARNING("HINT run: GRANT SELECT ON " << tableName << " TO " << user << ";");
+                RUNTIME_FAIL("grants missing");
             }
             throw RuntimeException (ex.msg);
         }
@@ -952,24 +953,25 @@ namespace OpenLogReplicator {
             string query("SELECT 1 FROM " + tableName + " AS OF SCN " + to_string(scn) + " WHERE 0 = 1");
 
             DatabaseStatement stmt(conn);
-            TRACE_(TRACE2_SQL, "SQL: " << query);
+            TRACE(TRACE2_SQL, "SQL: " << query);
             stmt.createStatement(query.c_str());
             uint64_t dummy; stmt.defineUInt64(1, dummy);
             stmt.executeQuery();
         } catch (RuntimeException &ex) {
             if (conId > 0) {
-                RUNTIME_FAIL("grants missing" << endl <<
-                        "HINT run: ALTER SESSION SET CONTAINER = " << conName << ";" << endl <<
-                        "HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+                WARNING("HINT run: ALTER SESSION SET CONTAINER = " << conName << ";");
+                WARNING("HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+                RUNTIME_FAIL("grants missing");
             } else {
-                RUNTIME_FAIL("grants missing" << endl << "HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+                WARNING("HINT run: GRANT SELECT, FLASHBACK ON " << tableName << " TO " << user << ";");
+                RUNTIME_FAIL("grants missing");
             }
             throw RuntimeException (ex.msg);
         }
     }
 
     void OracleAnalyzerOnline::refreshSchema(void) {
-        FULL_("reading dictionaries for SCN " << dec << scn);
+        FULL("reading dictionaries for SCN " << dec << scn);
 
         schemaScn = scn;
         readSystemDictionaries("SYS", "CCOL$", false);
@@ -993,17 +995,17 @@ namespace OpenLogReplicator {
         //reading SYS.COL$
         DatabaseStatement stmtCol(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_COL_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_COL_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtCol.createStatement(SQL_GET_SYS_COL_OBJ);
             stmtCol.bindUInt64(1, schemaScn);
             stmtCol.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_COL_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_COL_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtCol.createStatement(SQL_GET_SYS_COL_USER);
             stmtCol.bindUInt64(1, schemaScn);
             stmtCol.bindUInt64(2, schemaScn);
@@ -1036,17 +1038,17 @@ namespace OpenLogReplicator {
         //reading SYS.CCOL$
         DatabaseStatement stmtCCol(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CCOL_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CCOL_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtCCol.createStatement(SQL_GET_SYS_CCOL_OBJ);
             stmtCCol.bindUInt64(1, schemaScn);
             stmtCCol.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CCOL_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CCOL_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtCCol.createStatement(SQL_GET_SYS_CCOL_USER);
             stmtCCol.bindUInt64(1, schemaScn);
             stmtCCol.bindUInt64(2, schemaScn);
@@ -1068,17 +1070,17 @@ namespace OpenLogReplicator {
         //reading SYS.CDEF$
         DatabaseStatement stmtCDef(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CDEF_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CDEF_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtCDef.createStatement(SQL_GET_SYS_CDEF_OBJ);
             stmtCDef.bindUInt64(1, schemaScn);
             stmtCDef.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CDEF_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_CDEF_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtCDef.createStatement(SQL_GET_SYS_CDEF_USER);
             stmtCDef.bindUInt64(1, schemaScn);
             stmtCDef.bindUInt64(2, schemaScn);
@@ -1099,17 +1101,17 @@ namespace OpenLogReplicator {
         //reading SYS.TAB$
         DatabaseStatement stmtDeferredStg(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_DEFERRED_STG_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_DEFERRED_STG_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtDeferredStg.createStatement(SQL_GET_SYS_DEFERRED_STG_OBJ);
             stmtDeferredStg.bindUInt64(1, schemaScn);
             stmtDeferredStg.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_DEFERRED_STG_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_DEFERRED_STG_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtDeferredStg.createStatement(SQL_GET_SYS_DEFERRED_STG_USER);
             stmtDeferredStg.bindUInt64(1, schemaScn);
             stmtDeferredStg.bindUInt64(2, schemaScn);
@@ -1130,17 +1132,17 @@ namespace OpenLogReplicator {
         DatabaseStatement stmtECol(conn);
         if (version12) {
             if (obj != 0) {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL_OBJ << endl <<
-                        "PARAM1: " << schemaScn << endl <<
-                        "PARAM2: " << obj);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL_OBJ);
+                TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM2: " << obj);
                 stmtECol.createStatement(SQL_GET_SYS_ECOL_OBJ);
                 stmtECol.bindUInt64(1, schemaScn);
                 stmtECol.bindUInt32(2, obj);
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL_USER << endl <<
-                        "PARAM1: " << schemaScn << endl <<
-                        "PARAM2: " << schemaScn << endl <<
-                        "PARAM3: " << user);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL_USER);
+                TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM3: " << user);
                 stmtECol.createStatement(SQL_GET_SYS_ECOL_USER);
                 stmtECol.bindUInt64(1, schemaScn);
                 stmtECol.bindUInt64(2, schemaScn);
@@ -1148,17 +1150,17 @@ namespace OpenLogReplicator {
             }
         } else {
             if (obj != 0) {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL11_OBJ << endl <<
-                        "PARAM1: " << schemaScn << endl <<
-                        "PARAM2: " << obj);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL11_OBJ);
+                TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM2: " << obj);
                 stmtECol.createStatement(SQL_GET_SYS_ECOL11_OBJ);
                 stmtECol.bindUInt64(1, schemaScn);
                 stmtECol.bindUInt32(2, obj);
             } else {
-                TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL11_USER << endl <<
-                        "PARAM1: " << schemaScn << endl <<
-                        "PARAM2: " << schemaScn << endl <<
-                        "PARAM3: " << user);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_ECOL11_USER);
+                TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+                TRACE(TRACE2_SQL, "PARAM3: " << user);
                 stmtECol.createStatement(SQL_GET_SYS_ECOL11_USER);
                 stmtECol.bindUInt64(1, schemaScn);
                 stmtECol.bindUInt64(2, schemaScn);
@@ -1180,17 +1182,17 @@ namespace OpenLogReplicator {
         //reading SYS.TAB$
         DatabaseStatement stmtTab(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TAB_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TAB_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtTab.createStatement(SQL_GET_SYS_TAB_OBJ);
             stmtTab.bindUInt64(1, schemaScn);
             stmtTab.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TAB_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TAB_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtTab.createStatement(SQL_GET_SYS_TAB_USER);
             stmtTab.bindUInt64(1, schemaScn);
             stmtTab.bindUInt64(2, schemaScn);
@@ -1217,17 +1219,17 @@ namespace OpenLogReplicator {
         //reading SYS.TABCOMPART$
         DatabaseStatement stmtTabComPart(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABCOMPART_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABCOMPART_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtTabComPart.createStatement(SQL_GET_SYS_TABCOMPART_OBJ);
             stmtTabComPart.bindUInt64(1, schemaScn);
             stmtTabComPart.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABCOMPART_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABCOMPART_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtTabComPart.createStatement(SQL_GET_SYS_TABCOMPART_USER);
             stmtTabComPart.bindUInt64(1, schemaScn);
             stmtTabComPart.bindUInt64(2, schemaScn);
@@ -1248,20 +1250,20 @@ namespace OpenLogReplicator {
         //reading SYS.SEG$
         DatabaseStatement stmtSeg(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_SEG_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_SEG_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << obj);
             stmtSeg.createStatement(SQL_GET_SYS_SEG_OBJ);
             stmtSeg.bindUInt64(1, schemaScn);
             stmtSeg.bindUInt64(2, schemaScn);
             stmtSeg.bindUInt32(3, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_SEG_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << schemaScn << endl <<
-                    "PARAM4: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_SEG_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM4: " << user);
             stmtSeg.createStatement(SQL_GET_SYS_SEG_USER);
             stmtSeg.bindUInt64(1, schemaScn);
             stmtSeg.bindUInt64(2, schemaScn);
@@ -1284,17 +1286,17 @@ namespace OpenLogReplicator {
         //reading SYS.TABPART$
         DatabaseStatement stmtTabPart(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABPART_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABPART_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtTabPart.createStatement(SQL_GET_SYS_TABPART_OBJ);
             stmtTabPart.bindUInt64(1, schemaScn);
             stmtTabPart.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABPART_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABPART_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtTabPart.createStatement(SQL_GET_SYS_TABPART_USER);
             stmtTabPart.bindUInt64(1, schemaScn);
             stmtTabPart.bindUInt64(2, schemaScn);
@@ -1315,17 +1317,17 @@ namespace OpenLogReplicator {
         //reading SYS.TABSUBPART$
         DatabaseStatement stmtTabSubPart(conn);
         if (obj != 0) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABSUBPART_OBJ << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABSUBPART_OBJ);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << obj);
             stmtTabSubPart.createStatement(SQL_GET_SYS_TABSUBPART_OBJ);
             stmtTabSubPart.bindUInt64(1, schemaScn);
             stmtTabSubPart.bindUInt32(2, obj);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABSUBPART_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << schemaScn << endl <<
-                    "PARAM3: " << user);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_TABSUBPART_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM3: " << user);
             stmtTabSubPart.createStatement(SQL_GET_SYS_TABSUBPART_USER);
             stmtTabSubPart.bindUInt64(1, schemaScn);
             stmtTabSubPart.bindUInt64(2, schemaScn);
@@ -1346,18 +1348,18 @@ namespace OpenLogReplicator {
 
     void OracleAnalyzerOnline::readSystemDictionaries(string maskSchema, string maskObj, bool trackDDL) {
         if (maskObj.length() == 0) {
-            FULL_("reading dictionaries for " << maskSchema << ".%");
+            FULL("reading dictionaries for " << maskSchema << ".%");
         } else {
-            FULL_("reading dictionaries for " << maskSchema << "." << maskObj);
+            FULL("reading dictionaries for " << maskSchema << "." << maskObj);
         }
 
         try {
             DatabaseStatement stmtUser(conn);
 
             //reading SYS.USER$
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_USER << endl <<
-                    "PARAM1: " << schemaScn << endl <<
-                    "PARAM2: " << maskSchema);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_USER);
+            TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+            TRACE(TRACE2_SQL, "PARAM2: " << maskSchema);
             stmtUser.createStatement(SQL_GET_SYS_USER);
             stmtUser.bindUInt64(1, schemaScn);
             stmtUser.bindString(2, maskSchema);
@@ -1376,17 +1378,17 @@ namespace OpenLogReplicator {
                 DatabaseStatement stmtObj(conn);
                 //reading SYS.OBJ$
                 if (trackDDL) {
-                    TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_OBJ_USER << endl <<
-                            "PARAM1: " << schemaScn << endl <<
-                            "PARAM2: " << userUser);
+                    TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_OBJ_USER);
+                    TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                    TRACE(TRACE2_SQL, "PARAM2: " << userUser);
                     stmtObj.createStatement(SQL_GET_SYS_OBJ_USER);
                     stmtObj.bindUInt64(1, schemaScn);
                     stmtObj.bindUInt32(2, userUser);
                 } else {
-                    TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SYS_OBJ_NAME << endl <<
-                            "PARAM1: " << schemaScn << endl <<
-                            "PARAM2: " << userUser << endl <<
-                            "PARAM3: " << maskObj);
+                    TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SYS_OBJ_NAME);
+                    TRACE(TRACE2_SQL, "PARAM1: " << schemaScn);
+                    TRACE(TRACE2_SQL, "PARAM2: " << userUser);
+                    TRACE(TRACE2_SQL, "PARAM3: " << maskObj);
                     stmtObj.createStatement(SQL_GET_SYS_OBJ_NAME);
                     stmtObj.bindUInt64(1, schemaScn);
                     stmtObj.bindUInt32(2, userUser);
@@ -1426,13 +1428,13 @@ namespace OpenLogReplicator {
             RUNTIME_FAIL("mask " << mask << " is missing \".\" character");
         }
         readSystemDictionaries(mask.substr(0, pos), "", true);
-        INFO_("- reading table schema for: " << mask);
+        INFO("- reading table schema for: " << mask);
 
         uint64_t tabCnt = 0;
         DatabaseStatement stmt(conn), stmtCol(conn), stmtPart(conn), stmtSupp(conn);
 
-        TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_TABLE_LIST << endl <<
-                "PARAM1: " << mask);
+        TRACE(TRACE2_SQL, "SQL: " << SQL_GET_TABLE_LIST);
+        TRACE(TRACE2_SQL, "PARAM1: " << mask);
         stmt.createStatement(SQL_GET_TABLE_LIST);
         typeDATAOBJ dataObj; stmt.defineUInt32(1, dataObj);
         typeOBJ obj; stmt.defineUInt32(2, obj);
@@ -1451,12 +1453,12 @@ namespace OpenLogReplicator {
         uint64_t compressed; stmt.defineUInt64(15, compressed);
 
         if (version12) {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_COLUMN_LIST << endl <<
-                    "PARAM1: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_COLUMN_LIST);
+            TRACE(TRACE2_SQL, "PARAM1: " << obj);
             stmtCol.createStatement(SQL_GET_COLUMN_LIST);
         } else {
-            TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_COLUMN_LIST11 << endl <<
-                    "PARAM1: " << obj);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_COLUMN_LIST11);
+            TRACE(TRACE2_SQL, "PARAM1: " << obj);
             stmtCol.createStatement(SQL_GET_COLUMN_LIST11);
         }
         typeCOL colNo; stmtCol.defineInt16(1, colNo);
@@ -1479,17 +1481,17 @@ namespace OpenLogReplicator {
         typeCOL numSup; stmtCol.defineInt16(18, numSup);
         stmtCol.bindUInt32(1, obj);
 
-        TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_PARTITION_LIST << endl <<
-                "PARAM1: " << obj << endl <<
-                "PARAM2: " << obj);
+        TRACE(TRACE2_SQL, "SQL: " << SQL_GET_PARTITION_LIST);
+        TRACE(TRACE2_SQL, "PARAM1: " << obj);
+        TRACE(TRACE2_SQL, "PARAM2: " << obj);
         stmtPart.createStatement(SQL_GET_PARTITION_LIST);
         typeOBJ partitionObj; stmtPart.defineUInt32(1, partitionObj);
         typeDATAOBJ partitionDataObj; stmtPart.defineUInt32(2, partitionDataObj);
         stmtPart.bindUInt32(1, obj);
         stmtPart.bindUInt32(2, obj);
 
-        TRACE_(TRACE2_SQL, "SQL: " << SQL_GET_SUPPLEMNTAL_LOG_TABLE << endl <<
-                "PARAM1: " << obj);
+        TRACE(TRACE2_SQL, "SQL: " << SQL_GET_SUPPLEMNTAL_LOG_TABLE);
+        TRACE(TRACE2_SQL, "PARAM1: " << obj);
         stmtSupp.createStatement(SQL_GET_SUPPLEMNTAL_LOG_TABLE);
         uint64_t typeNo2; stmtSupp.defineUInt64(1, typeNo2);
         stmtSupp.bindUInt32(1, obj);
@@ -1502,7 +1504,7 @@ namespace OpenLogReplicator {
         while (ret) {
             //skip Index Organized Tables (IOT)
             if (iot) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - IOT");
+                INFO("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - IOT");
                 cluCols = 0;
                 dataObj = 0;
                 ret = stmt.next();
@@ -1511,7 +1513,7 @@ namespace OpenLogReplicator {
 
             //skip temporary tables
             if (temporary) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - temporary table");
+                INFO("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - temporary table");
                 cluCols = 0;
                 dataObj = 0;
                 ret = stmt.next();
@@ -1520,7 +1522,7 @@ namespace OpenLogReplicator {
 
             //skip nested tables
             if (nested) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - nested table");
+                INFO("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - nested table");
                 cluCols = 0;
                 dataObj = 0;
                 ret = stmt.next();
@@ -1529,7 +1531,7 @@ namespace OpenLogReplicator {
 
             //skip compressed tables
             if (compressed) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - compressed table");
+                INFO("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - compressed table");
                 dataObj = 0;
                 cluCols = 0;
                 ret = stmt.next();
@@ -1538,7 +1540,7 @@ namespace OpenLogReplicator {
 
             //table already added with another rule
             if (schema->checkDict(obj, dataObj) != nullptr) {
-                INFO_("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - already added");
+                INFO("  * skipped: " << owner << "." << name << " (OBJ: " << dec << obj << ") - already added");
                 dataObj = 0;
                 cluCols = 0;
                 ret = stmt.next();
@@ -1588,9 +1590,9 @@ namespace OpenLogReplicator {
                 if (typeNo == 1 || typeNo == 96) {
                     auto it = outputBuffer->characterMap.find(charmapId);
                     if (it == outputBuffer->characterMap.end()) {
+                        WARNING("HINT: check in database for name: SELECT NLS_CHARSET_NAME(" << dec << charmapId << ") FROM DUAL;");
                         RUNTIME_FAIL("table " << owner << "." << name << " - unsupported character set id: " << dec << charmapId <<
-                                " for column: " << columnName << endl <<
-                                "HINT: check in database for name: SELECT NLS_CHARSET_NAME(" << dec << charmapId << ") FROM DUAL;");
+                                " for column: " << columnName);
                     }
                 }
 
@@ -1614,7 +1616,7 @@ namespace OpenLogReplicator {
                         supLogColMissing = true;
                 }
 
-                FULL_("    - col: " << dec << segColNo << ": " << columnName << " (pk: " << dec << numPk << ", G: " << dec << guardSegNo << ")");
+                FULL("    - col: " << dec << segColNo << ": " << columnName << " (pk: " << dec << numPk << ", G: " << dec << guardSegNo << ")");
 
                 OracleColumn *column = new OracleColumn(colNo, guardSegNo, segColNo, columnName, typeNo, length, precision, scale, numPk,
                         charmapId, nullable, invisible, storedAsLob, constraint, added, guard);
@@ -1665,7 +1667,7 @@ namespace OpenLogReplicator {
                         ss << " - supplemental log missing, try: ALTER TABLE " << owner << "." << name << " ADD SUPPLEMENTAL LOG GROUP GRP" << dec << obj << " (" << keysStr << ") ALWAYS;";
                 }
             }
-            INFO_(ss.str());
+            INFO(ss.str());
 
             schema->object->maxSegCol = maxSegCol;
             schema->object->totalPk = totalPk;
@@ -1677,7 +1679,7 @@ namespace OpenLogReplicator {
             cluCols = 0;
             ret = stmt.next();
         }
-        INFO_("  * total: " << dec << tabCnt << " tables");
+        INFO("  * total: " << dec << tabCnt << " tables");
     }
 
     void OracleAnalyzerOnline::archGetLogOnline(OracleAnalyzer *oracleAnalyzer) {
@@ -1685,10 +1687,10 @@ namespace OpenLogReplicator {
 
         {
             DatabaseStatement stmt(((OracleAnalyzerOnline*)oracleAnalyzer)->conn);
-            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_ARCHIVE_LOG_LIST << endl <<
-                    "PARAM1: " << ((OracleAnalyzerOnline*)oracleAnalyzer)->sequence << endl <<
-                    "PARAM2: " << oracleAnalyzer->resetlogs << endl <<
-                    "PARAM3: " << oracleAnalyzer->activation);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_GET_ARCHIVE_LOG_LIST);
+            TRACE(TRACE2_SQL, "PARAM1: " << ((OracleAnalyzerOnline*)oracleAnalyzer)->sequence);
+            TRACE(TRACE2_SQL, "PARAM2: " << oracleAnalyzer->resetlogs);
+            TRACE(TRACE2_SQL, "PARAM3: " << oracleAnalyzer->activation);
 
             stmt.createStatement(SQL_GET_ARCHIVE_LOG_LIST);
             stmt.bindUInt32(1, ((OracleAnalyzerOnline*)oracleAnalyzer)->sequence);

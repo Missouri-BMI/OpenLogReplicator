@@ -47,7 +47,7 @@ namespace OpenLogReplicator {
     const char OutputBuffer::map16[17] = "0123456789abcdef";
 
     OutputBuffer::OutputBuffer(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat, uint64_t scnFormat,
-            uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat) :
+            uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType) :
             oracleAnalyzer(nullptr),
             messageFormat(messageFormat),
             xidFormat(xidFormat),
@@ -57,6 +57,7 @@ namespace OpenLogReplicator {
             unknownFormat(unknownFormat),
             schemaFormat(schemaFormat),
             columnFormat(columnFormat),
+            unknownType(unknownType),
             messageLength(0),
             valueLength(0),
             lastTime(0),
@@ -839,7 +840,7 @@ namespace OpenLogReplicator {
         ColumnValue *value;
         auto it = valuesMap.find(column);
 
-        if ((oracleAnalyzer->trace2 & TRACE2_DML) != 0) {
+        if ((trace2 & TRACE2_DML) != 0) {
             stringstream strStr;
             strStr << "value: " << dec << type << "/" << column << "/" << dec << length << "/" <<
                     setfill('0') << setw(2) << hex << (uint64_t)fb << " to: ";
@@ -1020,7 +1021,7 @@ namespace OpenLogReplicator {
         OracleColumn *column = object->columns[col];
 
         if (length == 0) {
-            RUNTIME_FAIL("ERROR, trying to output null data for column: " << column->name);
+            RUNTIME_FAIL("trying to output null data for column: " << column->name);
         }
 
         if (column->storedAsLob) {
@@ -1352,7 +1353,8 @@ namespace OpenLogReplicator {
             break;
 
         default:
-            columnUnknown(column->name, data, length);
+            if (unknownType == UNKNOWN_TYPE_SHOW)
+                columnUnknown(column->name, data, length);
         }
     }
 
@@ -1859,7 +1861,7 @@ namespace OpenLogReplicator {
             }
         }
 
-        if ((oracleAnalyzer->trace2 & TRACE2_DML) != 0) {
+        if ((trace2 & TRACE2_DML) != 0) {
             if (object != nullptr) {
                 TRACE(TRACE2_DML, "tab: " << object->owner << "." << object->name << " type: " << type);
 

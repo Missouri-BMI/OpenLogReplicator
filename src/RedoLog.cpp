@@ -795,8 +795,6 @@ namespace OpenLogReplicator {
         }
 
         if (redoLogRecord1->bdba != redoLogRecord2->bdba && redoLogRecord1->bdba != 0 && redoLogRecord2->bdba != 0) {
-            if (oracleAnalyzer->dumpRedoLog >= 1)
-                oracleAnalyzer->dumpStream << "ERROR: BDBA does not match (0x" << hex << redoLogRecord1->bdba << ", " << redoLogRecord2->bdba << ")!" << endl;
             REDOLOG_FAIL("BDBA does not match (0x" << hex << redoLogRecord1->bdba << ", " << redoLogRecord2->bdba << ")");
         }
 
@@ -902,19 +900,18 @@ namespace OpenLogReplicator {
     }
 
     void RedoLog::dumpRedoVector(uint8_t *data, uint64_t recordLength) const {
-        if (oracleAnalyzer->trace >= TRACE_WARNING) {
+        if (trace >= TRACE_WARNING) {
             stringstream ss;
-            ss << "WARNING: Dumping redo Vector" << endl;
-            ss << "WARNING: ##: " << dec << recordLength;
+            ss << "dumping redo vector" << endl;
+            ss << "##: " << dec << recordLength;
             for (uint64_t j = 0; j < recordLength; ++j) {
                 if ((j & 0x0F) == 0)
-                    ss << endl << "WARNING: ##  " << setfill(' ') << setw(2) << hex << j << ": ";
+                    ss << endl << "##  " << setfill(' ') << setw(2) << hex << j << ": ";
                 if ((j & 0x07) == 0)
                     ss << " ";
                 ss << setfill('0') << setw(2) << hex << (uint64_t)data[j] << " ";
             }
-            ss << endl;
-            OUT(ss.str());
+            WARNING(ss.str());
         }
     }
 
@@ -1141,18 +1138,26 @@ namespace OpenLogReplicator {
             }
         }
 
-        clock_t cEnd = clock();
-        double mySpeed = 0, myTime = 1000.0 * (cEnd - cStart) / CLOCKS_PER_SEC, suppLogPercent = 0.0;
-        if (currentBlock != startBlock)
-            suppLogPercent = 100.0 * oracleAnalyzer->suppLogSize / ((currentBlock - startBlock) * reader->blockSize);
-        if (myTime > 0)
-            mySpeed = (currentBlock - startBlock) * reader->blockSize / 1024 / 1024 / myTime * 1000;
+        if ((trace2 & TRACE2_PERFORMANCE) != 0) {
+            clock_t cEnd = clock();
+            double mySpeed = 0, myTime = 1000.0 * (cEnd - cStart) / CLOCKS_PER_SEC, suppLogPercent = 0.0;
+            if (currentBlock != startBlock)
+                suppLogPercent = 100.0 * oracleAnalyzer->suppLogSize / ((currentBlock - startBlock) * reader->blockSize);
+            if (myTime > 0)
+                mySpeed = (currentBlock - startBlock) * reader->blockSize * 1000.0 / 1024 / 1024 / myTime;
 
-        TRACE(TRACE2_PERFORMANCE, "PERFORMANCE: " << myTime << " ms, " <<
-                "Speed: " << fixed << setprecision(2) << mySpeed << " MB/s, " <<
-                "Redo log size: " << dec << ((currentBlock - startBlock) * reader->blockSize / 1024) << " kB, " <<
-                "Supplemental redo log size: " << dec << oracleAnalyzer->suppLogSize << " bytes " <<
-                "(" << fixed << setprecision(2) << suppLogPercent << " %)");
+            double myReadSpeed = 0;
+            if (reader->sumTime > 0)
+                myReadSpeed = (reader->sumRead * 1000000.0 / 1024 / 1024 / reader->sumTime);
+
+            TRACE(TRACE2_PERFORMANCE, "PERFORMANCE: " << myTime << " ms, " <<
+                    "Speed: " << fixed << setprecision(2) << mySpeed << " MB/s, " <<
+                    "Redo log size: " << dec << ((currentBlock - startBlock) * reader->blockSize / 1024 / 1024) << " MB, " <<
+                    "Read size: " << (reader->sumRead / 1024 / 1024) << " MB, " <<
+                    "Read speed: " << myReadSpeed << " MB/s, " <<
+                    "Supplemental redo log size: " << dec << oracleAnalyzer->suppLogSize << " bytes " <<
+                    "(" << fixed << setprecision(2) << suppLogPercent << " %)");
+        }
 
         if (oracleAnalyzer->dumpRedoLog >= 1 && oracleAnalyzer->dumpStream.is_open())
             oracleAnalyzer->dumpStream.close();

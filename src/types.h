@@ -111,6 +111,9 @@ typedef uint64_t typeunicode;
 #define SCHEMA_FORMAT_REPEATED                  2
 #define SCHEMA_FORMAT_OBJ                       4
 
+#define UNKNOWN_TYPE_HIDE                       0
+#define UNKNOWN_TYPE_SHOW                       1
+
 //default, only changed columns for update, or PK
 #define COLUMN_FORMAT_CHANGED                   0
 //show full nulls from insert & delete
@@ -119,9 +122,10 @@ typedef uint64_t typeunicode;
 #define COLUMN_FORMAT_FULL                      2
 
 #define TRACE_SILENT                            0
-#define TRACE_WARNING                           1
-#define TRACE_INFO                              2
-#define TRACE_FULL                              3
+#define TRACE_ERROR                             1
+#define TRACE_WARNING                           2
+#define TRACE_INFO                              3
+#define TRACE_FULL                              4
 
 #define TRACE2_DML                              0x0000001
 #define TRACE2_DUMP                             0x0000002
@@ -183,19 +187,18 @@ typedef uint64_t typeunicode;
 #define PRINTSCN48(scn)                         "0x"<<setfill('0')<<setw(4)<<hex<<((uint32_t)((scn)>>32)&0xFFFF)<<"."<<setw(8)<<((scn)&0xFFFFFFFF)
 #define PRINTSCN64(scn)                         "0x"<<setfill('0')<<setw(16)<<hex<<(scn)
 
-#define DUMP(x)                                 {stringstream s; s << x << endl; cerr << s.str(); }
-#define ERROR(x)                                {stringstream s; s << "ERROR: " << x << endl; cerr << s.str(); }
-#define OUT(x)                                  {cerr << x; }
+#ifndef TRACEVAR
+#define TRACEVAR
+extern uint64_t trace, trace2;
+#endif
 
-#define WARNING(x)                              {if (oracleAnalyzer->trace >= TRACE_INFO){stringstream s; s << "WARNING: " << x << endl; cerr << s.str();} }
-#define INFO(x)                                 {if (oracleAnalyzer->trace >= TRACE_INFO){stringstream s; s << "INFO: " << x << endl; cerr << s.str();} }
-#define FULL(x)                                 {if (oracleAnalyzer->trace >= TRACE_FULL){stringstream s; s << "FULL: " << x << endl; cerr << s.str();} }
-#define TRACE(t,x)                              {if ((oracleAnalyzer->trace2 & (t)) != 0) {stringstream s; s << "TRACE: " << x << endl; cerr << s.str();} }
+#define ERROR(x)                                {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); } }
+#define WARNING(x)                              {if (trace >= TRACE_WARNING) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [WARNING] " << x << endl; cerr << s.str();} }
+#define INFO(x)                                 {if (trace >= TRACE_INFO) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [INFO] " << x << endl; cerr << s.str();} }
+#define FULL(x)                                 {if (trace >= TRACE_FULL) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [FULL] " << x << endl; cerr << s.str();} }
+#define TRACE(t,x)                              {if ((trace2 & (t)) != 0) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [TRACE] " << x << endl; cerr << s.str();} }
+#define RUNTIME_FAIL(x)                         {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw RuntimeException("error");}
 
-#define WARNING_(x)                             {if (trace >= TRACE_INFO){stringstream s; s << "WARNING: " << x << endl; cerr << s.str();} }
-#define INFO_(x)                                {if (trace >= TRACE_INFO){stringstream s; s << "INFO: " << x << endl; cerr << s.str();} }
-#define FULL_(x)                                {if (trace >= TRACE_FULL){stringstream s; s << "FULL: " << x << endl; cerr << s.str();} }
-#define TRACE_(t,x)                             {if ((trace2 & (t)) != 0) {stringstream s; s << "TRACE: " << x << endl; cerr << s.str();} }
 #define TYPEINTXLEN                             4
 #define TYPEINTXDIGITS                          77
 
@@ -288,8 +291,8 @@ namespace OpenLogReplicator {
             //YYYY-MM-DDThh:mm:ssZ
         }
 
-        friend ostream& operator<<(ostream& os, const typetime& time) {
-            uint64_t rest = time.val;
+        friend ostream& operator<<(ostream& os, const typetime& tm) {
+            uint64_t rest = tm.val;
             uint64_t ss = rest % 60; rest /= 60;
             uint64_t mi = rest % 60; rest /= 60;
             uint64_t hh = rest % 24; rest /= 24;

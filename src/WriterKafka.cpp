@@ -25,8 +25,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 
 using namespace std;
 
-extern uint64_t trace2;
-
 namespace OpenLogReplicator {
 
     WriterKafka::WriterKafka(const char *alias, OracleAnalyzer *oracleAnalyzer, const char *brokers, const char *topic,
@@ -110,7 +108,7 @@ namespace OpenLogReplicator {
     }
 
     void WriterKafka::logger_cb(const rd_kafka_t *rk, int level, const char *fac, const char *buf) {
-        TRACE_(TRACE2_KAFKA, "KAFKA: " << dec << level << ", rk: " << (rk ? rd_kafka_name(rk) : NULL) << ", fac: " << fac << ", err: " << buf);
+        TRACE(TRACE2_KAFKA, "KAFKA: " << dec << level << ", rk: " << (rk ? rd_kafka_name(rk) : NULL) << ", fac: " << fac << ", err: " << buf);
     }
 
     void WriterKafka::sendMessage(OutputBufferMsg *msg) {

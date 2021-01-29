@@ -76,6 +76,7 @@ namespace OpenLogReplicator {
         uint64_t unknownFormat;
         uint64_t schemaFormat;
         uint64_t columnFormat;
+        uint64_t unknownType;
         uint64_t messageLength;
         char valueBuffer[MAX_FIELD_LENGTH];
         uint64_t valueLength;
@@ -108,7 +109,7 @@ namespace OpenLogReplicator {
         virtual void columnString(string &columnName) = 0;
         virtual void columnNumber(string &columnName, uint64_t precision, uint64_t scale) = 0;
         virtual void columnRaw(string &columnName, const uint8_t *data, uint64_t length) = 0;
-        virtual void columnTimestamp(string &columnName, struct tm &time, uint64_t fraction, const char *tz) = 0;
+        virtual void columnTimestamp(string &columnName, struct tm &timeVal, uint64_t fraction, const char *tz) = 0;
         void valueBufferAppend(uint8_t value);
         void valueBufferAppendHex(typeunicode value, uint64_t length);
         void processValue(OracleObject *object, typeCOL col, const uint8_t *data, uint64_t length, uint64_t typeNo, uint64_t charsetId);
@@ -130,7 +131,7 @@ namespace OpenLogReplicator {
         OutputBufferMsg *msg;
 
         OutputBuffer(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat, uint64_t scnFormat,
-                uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat);
+                uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType);
         virtual ~OutputBuffer();
 
         void initialize(OracleAnalyzer *oracleAnalyzer);
@@ -138,7 +139,7 @@ namespace OpenLogReplicator {
         void setWriter(Writer *writer);
         void setNlsCharset(string &nlsCharset, string &nlsNcharCharset);
 
-        virtual void processBegin(typeSCN scn, typetime time, typeXID xid) = 0;
+        virtual void processBegin(typeSCN scn, typetime timeVal, typeXID xid) = 0;
         virtual void processCommit(void) = 0;
         virtual void processInsert(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
         virtual void processUpdate(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
@@ -148,8 +149,8 @@ namespace OpenLogReplicator {
         void processDeleteMultiple(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
         void processDML(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2, uint64_t type);
         void processDDLheader(RedoLogRecord *redoLogRecord1);
-        //virtual void processCheckpoint(typeSCN scn, typetime time) = 0;
-        //virtual void processSwitch(typeSCN scn, typetime time) = 0;
+        //virtual void processCheckpoint(typeSCN scn, typetime timeVal) = 0;
+        //virtual void processSwitch(typeSCN scn, typetime timeVal) = 0;
     };
 }
 

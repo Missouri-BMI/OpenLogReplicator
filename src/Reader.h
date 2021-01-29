@@ -93,6 +93,8 @@ namespace OpenLogReplicator {
         typeSCN firstScn;
         typeSCN nextScnHeader;
         typeSCN nextScn;
+        uint64_t sumRead;
+        uint64_t sumTime;
 
         uint64_t fileSize;
         atomic<uint64_t> status;

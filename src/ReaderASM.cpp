@@ -54,8 +54,8 @@ namespace OpenLogReplicator {
 
         try {
             DatabaseStatement stmt(((OracleAnalyzerOnlineASM*)oracleAnalyzer)->connASM);
-            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_CLOSE << endl <<
-                    "PARAM1: " << fileDes);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_CLOSE);
+            TRACE(TRACE2_SQL, "PARAM1: " << fileDes);
             stmt.createStatement(SQL_ASM_CLOSE);
             stmt.bindInt32(1, fileDes);
             stmt.executeQuery();
@@ -70,11 +70,11 @@ namespace OpenLogReplicator {
         try {
             blockSize = 0;
             DatabaseStatement stmt(((OracleAnalyzerOnlineASM*)oracleAnalyzer)->connASM);
-            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_GETFILEATR << endl <<
-                    "PARAM1: " << pathMapped << endl <<
-                    "PARAM2: " << fileType << endl <<
-                    "PARAM3: " << fileSize << endl <<
-                    "PARAM4: " << blockSize);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_GETFILEATR);
+            TRACE(TRACE2_SQL, "PARAM1: " << pathMapped);
+            TRACE(TRACE2_SQL, "PARAM2: " << fileType);
+            TRACE(TRACE2_SQL, "PARAM3: " << fileSize);
+            TRACE(TRACE2_SQL, "PARAM4: " << blockSize);
             stmt.createStatement(SQL_ASM_GETFILEATR);
             stmt.bindString(1, pathMapped);
             stmt.bindUInt64(2, fileType);
@@ -83,13 +83,13 @@ namespace OpenLogReplicator {
             stmt.executeQuery();
 
             physicalBlockSize = -1;
-            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_OPEN << endl <<
-                    "PARAM1: " << pathMapped << endl <<
-                    "PARAM2: " << fileType << endl <<
-                    "PARAM3: " << blockSize << endl <<
-                    "PARAM4: " << fileDes << endl <<
-                    "PARAM5: " << physicalBlockSize << endl <<
-                    "PARAM6: " << fileSize);
+            TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_OPEN);
+            TRACE(TRACE2_SQL, "PARAM1: " << pathMapped);
+            TRACE(TRACE2_SQL, "PARAM2: " << fileType);
+            TRACE(TRACE2_SQL, "PARAM3: " << blockSize);
+            TRACE(TRACE2_SQL, "PARAM4: " << fileDes);
+            TRACE(TRACE2_SQL, "PARAM5: " << physicalBlockSize);
+            TRACE(TRACE2_SQL, "PARAM6: " << fileSize);
             stmt.createStatement(SQL_ASM_OPEN);
             stmt.bindString(1, pathMapped);
             stmt.bindUInt64(2, fileType);
@@ -111,14 +111,18 @@ namespace OpenLogReplicator {
         if (fileDes == -1)
             return -1;
 
+        uint64_t startTime = 0;
+        if ((trace2 & TRACE2_PERFORMANCE) != 0)
+            startTime = getTime();
+
         pos /= blockSize;
         try {
             if (stmtRead == nullptr) {
                 stmtRead = new DatabaseStatement(((OracleAnalyzerOnlineASM*)oracleAnalyzer)->connASM);
-                TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_READ << endl <<
-                        "PARAM1: " << fileDes << endl <<
-                        "PARAM2: " << pos << endl <<
-                        "PARAM3: " << size);
+                TRACE(TRACE2_SQL, "SQL: " << SQL_ASM_READ);
+                TRACE(TRACE2_SQL, "PARAM1: " << fileDes);
+                TRACE(TRACE2_SQL, "PARAM2: " << pos);
+                TRACE(TRACE2_SQL, "PARAM3: " << size);
                 stmtRead->createStatement(SQL_ASM_READ);
             } else
                 stmtRead->unbindAll();
@@ -130,6 +134,12 @@ namespace OpenLogReplicator {
             stmtRead->executeQuery();
         } catch (RuntimeException &ex) {
             return -1;
+        }
+
+        if ((trace2 & TRACE2_PERFORMANCE) != 0) {
+            if (size > 0)
+                sumRead += size;
+            sumTime += getTime() - startTime;
         }
 
         return size;

@@ -81,6 +81,10 @@ namespace OpenLogReplicator {
     }
 
     int64_t ReaderFilesystem::redoRead(uint8_t *buf, uint64_t pos, uint64_t size) {
+        uint64_t startTime = 0;
+        if ((trace2 & TRACE2_PERFORMANCE) != 0)
+            startTime = getTime();
+
         int64_t bytes = pread(fileDes, buf, size, pos);
         TRACE(TRACE2_FILE, "FILE: read " << pathMapped << ", " << dec << pos << ", " << dec << size << " returns " << dec << bytes);
 
@@ -96,6 +100,12 @@ namespace OpenLogReplicator {
             if (bytes > 0) {
                 FULL("disabling direct read for: " << pathMapped);
             }
+        }
+
+        if ((trace2 & TRACE2_PERFORMANCE) != 0) {
+            if (bytes > 0)
+                sumRead += bytes;
+            sumTime += getTime() - startTime;
         }
 
         return bytes;

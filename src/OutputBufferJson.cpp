@@ -25,9 +25,10 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 
 namespace OpenLogReplicator {
 
-    OutputBufferJson::OutputBufferJson(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat, uint64_t scnFormat,
-            uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat) :
-            OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat),
+    OutputBufferJson::OutputBufferJson(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat,
+            uint64_t scnFormat, uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType) :
+            OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat,
+                    unknownType),
             hasPreviousRedo(false),
             hasPreviousColumn(false) {
     }
@@ -36,6 +37,25 @@ namespace OpenLogReplicator {
     }
 
     void OutputBufferJson::columnNull(OracleObject *object, typeCOL col) {
+        if (object != nullptr && unknownType == UNKNOWN_TYPE_HIDE) {
+            OracleColumn *column = object->columns[col];
+
+            if (column->storedAsLob)
+                return;
+
+            uint64_t typeNo = object->columns[col]->typeNo;
+            if (typeNo != 1 //varchar2/nvarchar2
+                    && typeNo != 96 //char/nchar
+                    && typeNo != 2 //number/float
+                    && typeNo != 12 //date
+                    && typeNo != 180 //timestamp
+                    && typeNo != 23 //raw
+                    && typeNo != 100 //binary_float
+                    && typeNo != 101 //binary_double
+                    && typeNo != 181) //timestamp with time zone
+                return;
+        }
+
         if (hasPreviousColumn)
             outputBufferAppend(',');
         else
@@ -485,8 +505,8 @@ namespace OpenLogReplicator {
         return result;
     }
 
-    void OutputBufferJson::processBegin(typeSCN scn, typetime time, typeXID xid) {
-        lastTime = time;
+    void OutputBufferJson::processBegin(typeSCN scn, typetime timeVal, typeXID xid) {
+        lastTime = timeVal;
         lastScn = scn;
         lastXid = xid;
         hasPreviousRedo = false;

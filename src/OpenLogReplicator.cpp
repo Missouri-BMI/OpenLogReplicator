@@ -28,6 +28,9 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include <thread>
 #include <unistd.h>
 
+uint64_t trace = 3, trace2 = 0;
+#define TRACEVAR
+
 #include "ConfigurationException.h"
 #include "OracleAnalyzer.h"
 #include "OracleAnalyzerBatch.h"
@@ -80,19 +83,18 @@ mutex mainMtx;
 condition_variable mainThread;
 bool exitOnSignal = false;
 bool mainShutdown = false;
-uint64_t trace2 = 0;
 
 void stopMain(void) {
     unique_lock<mutex> lck(mainMtx);
 
     mainShutdown = true;
-    TRACE_(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") STOP ALL");
+    TRACE(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") STOP ALL");
     mainThread.notify_all();
 }
 
 void signalHandler(int s) {
     if (!exitOnSignal) {
-        cerr << "Caught signal " << s << ", exiting" << endl;
+        WARNING("caught signal " << s << ", exiting");
         exitOnSignal = true;
         stopMain();
     }
@@ -101,7 +103,7 @@ void signalHandler(int s) {
 void signalCrash(int sig) {
     void *array[32];
     size_t size = backtrace(array, 32);
-    cerr << "Error: signal " << dec << sig << endl;
+    ERROR("signal " << dec << sig);
     backtrace_symbols_fd(array, size, STDERR_FILENO);
     exit(1);
 }
@@ -112,7 +114,7 @@ int main(int argc, char **argv) {
     signal(SIGSEGV, signalCrash);
     uintX_t::initializeBASE10();
 
-    cerr << "OpenLogReplicator v." PACKAGE_VERSION " (C) 2018-2021 by Adam Leszczynski (aleszczynski@bersler.com), see LICENSE file for licensing information" << endl;
+    INFO("OpenLogReplicator v." PACKAGE_VERSION " (C) 2018-2021 by Adam Leszczynski (aleszczynski@bersler.com), see LICENSE file for licensing information");
 
     list<OracleAnalyzer *> analyzers;
     list<Writer *> writers;
@@ -169,7 +171,6 @@ int main(int argc, char **argv) {
         }
 
         //optional
-        uint64_t trace = 2;
         if (document.HasMember("trace")) {
             const Value& traceJSON = document["trace"];
             trace = traceJSON.GetUint64();
@@ -180,7 +181,7 @@ int main(int argc, char **argv) {
             const Value& traceJSON = document["trace2"];
             trace2 = traceJSON.GetUint64();
         }
-        TRACE_(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") START");
+        TRACE(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") START");
 
         //optional
         uint64_t dumpRawData = 0;
@@ -198,7 +199,7 @@ int main(int argc, char **argv) {
         for (SizeType i = 0; i < sourcesJSON.Size(); ++i) {
             const Value& sourceJSON = sourcesJSON[i];
             const Value& aliasJSON = getJSONfieldV(configFileName, sourceJSON, "alias");
-            cerr << "Adding source: " << aliasJSON.GetString() << endl;
+            INFO("adding source: " << aliasJSON.GetString());
 
             //optional
             uint64_t flags = 0;
@@ -351,14 +352,26 @@ int main(int argc, char **argv) {
                 }
             }
 
+            //optional
+            uint64_t unknownType = UNKNOWN_TYPE_HIDE;
+            if (formatJSON.HasMember("unknown-type")) {
+                const Value& unknownTypeJSON = formatJSON["unknown-type"];
+                unknownType = unknownTypeJSON.GetUint64();
+                if (unknownType > 1) {
+                    CONFIG_FAIL("bad JSON, invalid \"unknown-type\" value: " << unknownTypeJSON.GetString() << ", expected one of: {0, 1}");
+                }
+            }
+
             const Value& formatTypeJSON = getJSONfieldV(configFileName, formatJSON, "type");
 
             OutputBuffer *outputBuffer = nullptr;
             if (strcmp("json", formatTypeJSON.GetString()) == 0) {
-                outputBuffer = new OutputBufferJson(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat);
+                outputBuffer = new OutputBufferJson(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat,
+                        schemaFormat, columnFormat, unknownType);
             } else if (strcmp("protobuf", formatTypeJSON.GetString()) == 0) {
 #ifdef LINK_LIBRARY_PROTOBUF
-                outputBuffer = new OutputBufferProtobuf(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat);
+                outputBuffer = new OutputBufferProtobuf(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat,
+                        schemaFormat, columnFormat, unknownType);
 #else
                 RUNTIME_FAIL("format \"protobuf\" is not compiled, exiting");
 #endif /* LINK_LIBRARY_PROTOBUF */
@@ -423,8 +436,8 @@ int main(int argc, char **argv) {
                 const Value& serverJSON = getJSONfieldV(configFileName, readerJSON, "server");
                 server = serverJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
-                        trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
+                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
+                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
                         memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, user, password,
                         server, isStandby);
 
@@ -468,8 +481,8 @@ int main(int argc, char **argv) {
 
             } else if (strcmp(readerTypeJSON.GetString(), "offline") == 0) {
 
-                oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace, trace2,
-                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb,
+                oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), dumpRedoLog,
+                        dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb,
                         memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath);
 
                 if (oracleAnalyzer == nullptr) {
@@ -523,8 +536,8 @@ int main(int argc, char **argv) {
                 const Value& serverASMJSON = getJSONfieldV(configFileName, readerJSON, "server-asm");
                 serverASM = serverASMJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
-                        trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
+                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
+                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
                         memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, user, password,
                         server, userASM, passwordASM, serverASM, isStandby);
 
@@ -560,8 +573,8 @@ int main(int argc, char **argv) {
                      conId = conIdJSON.GetUint();
                  }
 
-                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), trace,
-                         trace2, dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
+                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
+                         dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
                          memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, conId);
 
                  if (oracleAnalyzer == nullptr) {
@@ -639,7 +652,7 @@ int main(int argc, char **argv) {
         for (SizeType i = 0; i < targetsJSON.Size(); ++i) {
             const Value& targetJSON = targetsJSON[i];
             const Value& aliasJSON = getJSONfieldV(configFileName, targetJSON, "alias");
-            cerr << "Adding target: " << aliasJSON.GetString() << endl;
+            INFO("adding target: " << aliasJSON.GetString());
 
             const Value& sourceJSON = getJSONfieldV(configFileName, targetJSON, "source");
             OracleAnalyzer *oracleAnalyzer = nullptr;
@@ -884,6 +897,6 @@ int main(int argc, char **argv) {
     if (configFileBuffer != nullptr)
         delete[] configFileBuffer;
 
-    TRACE_(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") STOP");
+    TRACE(TRACE2_THREADS, "THREADS: MAIN (" << hex << this_thread::get_id() << ") STOP");
     return 0;
 }
