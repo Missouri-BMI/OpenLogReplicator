@@ -182,7 +182,7 @@ namespace OpenLogReplicator {
     void *Writer::run(void) {
         TRACE(TRACE2_THREADS, "THREADS: WRITER (" << hex << this_thread::get_id() << ") START");
 
-        INFO("Writer is starting: " << getName());
+        INFO("writer is starting: " << getName());
 
         try {
             //external loop for client disconnection
@@ -230,7 +230,7 @@ namespace OpenLogReplicator {
                                     outputBuffer->writersCond.wait_for(lck, chrono::nanoseconds(pollInterval));
                                 else {
                                     if (stop) {
-                                        INFO("Writer flushed, shutting down");
+                                        INFO("writer flushed, shutting down");
                                         doShutdown();
                                     } else
                                         outputBuffer->writersCond.wait_for(lck, chrono::seconds(5));
@@ -250,7 +250,7 @@ namespace OpenLogReplicator {
                             //queue is full
                             pollQueue();
                             while (tmpQueueSize >= queueSize && !shutdown) {
-                                FULL("output queue is full (" << dec << tmpQueueSize << " elements), sleeping " << dec << pollInterval << "us");
+                                DEBUG("output queue is full (" << dec << tmpQueueSize << " elements), sleeping " << dec << pollInterval << "us");
                                 usleep(pollInterval);
                                 pollQueue();
                             }
@@ -316,7 +316,7 @@ namespace OpenLogReplicator {
             stopMain();
         }
 
-        INFO("Writer is stopping: " << getName() << ", max queue size: " << dec << maxQueueSize);
+        INFO("writer is stopping: " << getName() << ", max queue size: " << dec << maxQueueSize);
 
         TRACE(TRACE2_THREADS, "THREADS: WRITER (" << hex << this_thread::get_id() << ") STOP");
         return 0;
@@ -332,7 +332,7 @@ namespace OpenLogReplicator {
         if (timeSinceCheckpoint < checkpointInterval && !force)
             return;
 
-        FULL("checkpoint - writing scn: " << dec << confirmedScn);
+        DEBUG("checkpoint - writing scn: " << dec << confirmedScn);
         string fileName = oracleAnalyzer->database + "-chkpt.json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
@@ -399,7 +399,7 @@ namespace OpenLogReplicator {
         oracleAnalyzer->startTime = startTime;
         oracleAnalyzer->startTimeRel = startTimeRel;
 
-        FULL("attempt to start analyzer");
+        DEBUG("attempt to start analyzer");
         if (oracleAnalyzer->scn == ZERO_SCN && !shutdown) {
             unique_lock<mutex> lck(oracleAnalyzer->mtx);
             oracleAnalyzer->writerCond.notify_all();
@@ -407,7 +407,7 @@ namespace OpenLogReplicator {
         }
 
         if (oracleAnalyzer->scn != ZERO_SCN && !shutdown) {
-            FULL("analyzer started");
+            DEBUG("analyzer started");
         }
     }
 }

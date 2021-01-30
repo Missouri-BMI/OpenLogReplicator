@@ -63,7 +63,7 @@ namespace OpenLogReplicator {
         }
 
         if (oracleAnalyzer->scn != ZERO_SCN)
-            FULL("client requested scn: " << dec << startScn);
+            DEBUG("client requested scn: " << dec << startScn);
     }
 
     void WriterStream::processInfo(void) {

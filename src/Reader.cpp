@@ -336,7 +336,7 @@ namespace OpenLogReplicator {
 
         //updating nextScn if changed
         if (nextScn == ZERO_SCN && nextScnHeader != ZERO_SCN) {
-            TRACE(TRACE_FULL, "updating next SCN to: " << dec << nextScnHeader);
+            DEBUG("updating next SCN to: " << dec << nextScnHeader);
             nextScn = nextScnHeader;
         } else
         if (nextScn != ZERO_SCN && nextScnHeader != ZERO_SCN && nextScn != nextScnHeader) {

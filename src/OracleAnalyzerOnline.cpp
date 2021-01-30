@@ -841,7 +841,7 @@ namespace OpenLogReplicator {
         initializeSchema();
 
         if (sequence == 0) {
-            FULL("starting sequence not found - starting with new batch");
+            DEBUG("starting sequence not found - starting with new batch");
 
             DatabaseStatement stmt(conn);
             if (isStandby) {
@@ -861,7 +861,7 @@ namespace OpenLogReplicator {
             }
         }
 
-        FULL("start SEQ: " << dec << sequence);
+        DEBUG("start SEQ: " << dec << sequence);
 
         if (!keepConnection)
             closeConnection();
@@ -971,7 +971,7 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzerOnline::refreshSchema(void) {
-        FULL("reading dictionaries for SCN " << dec << scn);
+        DEBUG("reading dictionaries for SCN " << dec << scn);
 
         schemaScn = scn;
         readSystemDictionaries("SYS", "CCOL$", false);
@@ -1348,9 +1348,9 @@ namespace OpenLogReplicator {
 
     void OracleAnalyzerOnline::readSystemDictionaries(string maskSchema, string maskObj, bool trackDDL) {
         if (maskObj.length() == 0) {
-            FULL("reading dictionaries for " << maskSchema << ".%");
+            DEBUG("reading dictionaries for " << maskSchema << ".%");
         } else {
-            FULL("reading dictionaries for " << maskSchema << "." << maskObj);
+            DEBUG("reading dictionaries for " << maskSchema << "." << maskObj);
         }
 
         try {
@@ -1616,7 +1616,7 @@ namespace OpenLogReplicator {
                         supLogColMissing = true;
                 }
 
-                FULL("    - col: " << dec << segColNo << ": " << columnName << " (pk: " << dec << numPk << ", G: " << dec << guardSegNo << ")");
+                DEBUG("    - col: " << dec << segColNo << ": " << columnName << " (pk: " << dec << numPk << ", G: " << dec << guardSegNo << ")");
 
                 OracleColumn *column = new OracleColumn(colNo, guardSegNo, segColNo, columnName, typeNo, length, precision, scale, numPk,
                         charmapId, nullable, invisible, storedAsLob, constraint, added, guard);

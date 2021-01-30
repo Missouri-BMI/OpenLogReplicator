@@ -74,7 +74,7 @@ namespace OpenLogReplicator {
             if (fileDes == -1)
                 return REDO_ERROR;
 
-            FULL("file system does not support direct read for: " << pathMapped);
+            DEBUG("file system does not support direct read for: " << pathMapped);
         }
 
         return REDO_OK;
@@ -98,7 +98,7 @@ namespace OpenLogReplicator {
 
             //display warning only if this helped
             if (bytes > 0) {
-                FULL("disabling direct read for: " << pathMapped);
+                DEBUG("disabling direct read for: " << pathMapped);
             }
         }
 

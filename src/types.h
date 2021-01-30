@@ -125,7 +125,7 @@ typedef uint64_t typeunicode;
 #define TRACE_ERROR                             1
 #define TRACE_WARNING                           2
 #define TRACE_INFO                              3
-#define TRACE_FULL                              4
+#define TRACE_DEBUG                             4
 
 #define TRACE2_DML                              0x0000001
 #define TRACE2_DUMP                             0x0000002
@@ -195,7 +195,7 @@ extern uint64_t trace, trace2;
 #define ERROR(x)                                {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); } }
 #define WARNING(x)                              {if (trace >= TRACE_WARNING) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [WARNING] " << x << endl; cerr << s.str();} }
 #define INFO(x)                                 {if (trace >= TRACE_INFO) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [INFO] " << x << endl; cerr << s.str();} }
-#define FULL(x)                                 {if (trace >= TRACE_FULL) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [FULL] " << x << endl; cerr << s.str();} }
+#define DEBUG(x)                                {if (trace >= TRACE_DEBUG) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [DEBUG] " << x << endl; cerr << s.str();} }
 #define TRACE(t,x)                              {if ((trace2 & (t)) != 0) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [TRACE] " << x << endl; cerr << s.str();} }
 #define RUNTIME_FAIL(x)                         {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw RuntimeException("error");}
 

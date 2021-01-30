@@ -668,7 +668,7 @@ namespace OpenLogReplicator {
 
         INFO("Oracle analyzer for: " << database << " is shutting down");
 
-        FULL(*this);
+        DEBUG(*this);
         uint64_t buffersMax = readerDropAll();
 
         INFO("Oracle analyzer for: " << database << " is shut down, allocated at most " << dec <<
