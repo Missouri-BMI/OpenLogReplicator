@@ -461,6 +461,7 @@ namespace OpenLogReplicator {
             if (*str == '\t') {
                 outputBufferAppend('\\');
                 outputBufferAppend('t');
+                str++;
             } else if (*str == '\r') {
                 outputBufferAppend('\\');
                 outputBufferAppend('r');
@@ -476,8 +477,9 @@ namespace OpenLogReplicator {
             } else {
                 if (*str == '"' || *str == '\\' || *str == '/')
                     outputBufferAppend('\\');
-                outputBufferAppend(*(str++));
+                outputBufferAppend(*str);
             }
+            ++str;
             --length;
         }
     }
