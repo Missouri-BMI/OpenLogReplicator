@@ -36,6 +36,7 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "OpCode1801.h"
 #include "OracleAnalyzer.h"
 #include "OracleObject.h"
+#include "OutputBuffer.h"
 #include "Reader.h"
 #include "RedoLog.h"
 #include "RedoLogException.h"
@@ -48,24 +49,24 @@ using namespace std;
 extern void stopMain();
 
 namespace OpenLogReplicator {
-
     RedoLog::RedoLog(OracleAnalyzer *oracleAnalyzer, int64_t group, const char *path) :
-            oracleAnalyzer(oracleAnalyzer),
-            vectors(0),
-            lwnConfirmedBlock(2),
-            lwnAllocated(0),
-            lwnTimestamp(0),
-            lwnScn(0),
-            lwnScnMax(0),
-            lwnRecords(0),
-            lwnStartBlock(0),
-            shutdown(false),
-            group(group),
-            path(path),
-            sequence(0),
-            firstScn(firstScn),
-            nextScn(nextScn),
-            reader(nullptr) {
+		oracleAnalyzer(oracleAnalyzer),
+		vectors(0),
+		lwnConfirmedBlock(2),
+		lwnAllocated(0),
+		lwnTimestamp(0),
+		lwnScn(0),
+		lwnScnMax(0),
+		lwnRecords(0),
+		lwnStartBlock(0),
+		shutdown(false),
+		group(group),
+		path(path),
+		sequence(0),
+		firstScn(firstScn),
+		nextScn(nextScn),
+		reader(nullptr) {
+
         memset(&zero, 0, sizeof(struct RedoLogRecord));
 
         lwnChunks[0] = oracleAnalyzer->getMemoryChunk("LWN", false);
@@ -960,6 +961,7 @@ namespace OpenLogReplicator {
                 }
                 printHeaderInfo();
             }
+            oracleAnalyzer->outputBuffer->processSwitch(reader->firstScn, reader->firstTimeHeader, sequence);
         }
 
         clock_t cStart = clock();
@@ -1082,6 +1084,8 @@ namespace OpenLogReplicator {
                             if (lwnScnMax < lwnMembers[i]->scn)
                                 lwnScnMax = lwnMembers[i]->scn;
                         }
+
+                        oracleAnalyzer->outputBuffer->processCheckpoint(lwnScn, lwnTimestamp, sequence, currentBlock * reader->blockSize);
                     } catch (RedoLogException &ex) {
                         if ((oracleAnalyzer->flags & REDO_FLAGS_ON_ERROR_CONTINUE) == 0) {
                             RUNTIME_FAIL("runtime error, aborting further redo log processing");

@@ -28,19 +28,16 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
-    OracleAnalyzerOnlineASM::OracleAnalyzerOnlineASM(OutputBuffer *outputBuffer, const char *alias, const char *database,
-            uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
-            uint64_t archReadSleep, uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
-            const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath, const char *user, const char *password,
-            const char *connectString, const char *userASM, const char *passwordASM, const char *connectStringASM, bool isStandby) :
-                    OracleAnalyzerOnline(outputBuffer, alias, database, dumpRedoLog, dumpRawData, flags,
-            disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat,
-            savepointPath, redoCopyPath, user, password, connectString, isStandby),
-            userASM(userASM),
-            passwordASM(passwordASM),
-            connectStringASM(connectStringASM),
-            connASM(nullptr) {
+    OracleAnalyzerOnlineASM::OracleAnalyzerOnlineASM(OutputBuffer *outputBuffer, uint64_t dumpRedoLog, uint64_t dumpRawData,
+            const char *alias, const char *database, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
+            uint64_t disableChecks, const char *user, const char *password, const char *connectString, const char *userASM,
+            const char *passwordASM, const char *connectStringASM, bool isStandby) :
+        OracleAnalyzerOnline(outputBuffer, dumpRedoLog, dumpRawData, alias, database, memoryMinMb, memoryMaxMb, readBufferMax,
+                disableChecks, user, password, connectString, isStandby),
+        userASM(userASM),
+        passwordASM(passwordASM),
+        connectStringASM(connectStringASM),
+        connASM(nullptr) {
     }
 
     OracleAnalyzerOnlineASM::~OracleAnalyzerOnlineASM() {

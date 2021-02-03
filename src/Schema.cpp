@@ -38,9 +38,8 @@ extern const Value& getJSONfieldV(string &fileName, const Value& value, const ch
 extern const Value& getJSONfieldD(string &fileName, const Document& document, const char* field);
 
 namespace OpenLogReplicator {
-
     Schema::Schema() :
-            object(nullptr) {
+		object(nullptr) {
     }
 
     Schema::~Schema() {
@@ -369,10 +368,10 @@ namespace OpenLogReplicator {
         if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return false;
 
-        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: searching for previous schema on: " << oracleAnalyzer->savepointPath);
+        TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: searching for previous schema on: " << oracleAnalyzer->checkpointPath);
         DIR *dir;
-        if ((dir = opendir(oracleAnalyzer->savepointPath.c_str())) == nullptr) {
-            RUNTIME_FAIL("can't access directory: " << oracleAnalyzer->savepointPath);
+        if ((dir = opendir(oracleAnalyzer->checkpointPath.c_str())) == nullptr) {
+            RUNTIME_FAIL("can't access directory: " << oracleAnalyzer->checkpointPath);
         }
 
         string newLastCheckedDay;
@@ -384,9 +383,9 @@ namespace OpenLogReplicator {
 
             struct stat fileStat;
             string fileName = ent->d_name;
-            TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: found previous schema: " << oracleAnalyzer->savepointPath << "/" << fileName );
+            TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: found previous schema: " << oracleAnalyzer->checkpointPath << "/" << fileName );
 
-            string fullName = oracleAnalyzer->savepointPath + "/" + ent->d_name;
+            string fullName = oracleAnalyzer->checkpointPath + "/" + ent->d_name;
             if (stat(fullName.c_str(), &fileStat)) {
                 WARNING("can't read file information for: " << fullName);
                 continue;
@@ -422,7 +421,7 @@ namespace OpenLogReplicator {
 
         oracleAnalyzer->schemaScn = fileScnMax;
         ifstream infile;
-        string fileName = oracleAnalyzer->savepointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(oracleAnalyzer->schemaScn) + ".json";
+        string fileName = oracleAnalyzer->checkpointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(oracleAnalyzer->schemaScn) + ".json";
         infile.open(fileName.c_str(), ios::in);
 
         if (!infile.is_open()) {
@@ -855,7 +854,7 @@ namespace OpenLogReplicator {
         if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
             return;
 
-        string fileName = oracleAnalyzer->savepointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(oracleAnalyzer->schemaScn) + ".json";
+        string fileName = oracleAnalyzer->checkpointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(oracleAnalyzer->schemaScn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
 

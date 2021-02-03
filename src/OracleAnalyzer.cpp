@@ -38,11 +38,8 @@ using namespace std;
 extern void stopMain();
 
 namespace OpenLogReplicator {
-
-    OracleAnalyzer::OracleAnalyzer(OutputBuffer *outputBuffer, const char *alias, const char *database,  uint64_t dumpRedoLog,
-            uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep, uint64_t archReadSleep,
-            uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
-            const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath) :
+    OracleAnalyzer::OracleAnalyzer(OutputBuffer *outputBuffer, uint64_t dumpRedoLog, uint64_t dumpRawData, const char *alias,
+            const char *database, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax, uint64_t disableChecks) :
         Thread(alias),
         sequence(0),
         suppLogDbPrimary(0),
@@ -58,9 +55,17 @@ namespace OpenLogReplicator {
         memoryChunksSupplemental(0),
         database(database),
         dbBlockChecksum(""),
-        logArchiveFormat(logArchiveFormat),
-        savepointPath(savepointPath),
-        redoCopyPath(redoCopyPath),
+        logArchiveFormat("o1_mf_%t_%s_%h_.arc"),
+        redoCopyPath(""),
+        checkpointPath("checkpoint"),
+        checkpointIntervalTime(600),
+        checkpointIntervalMB(100),
+        checkpointKeepLast(10),
+        checkpointKeepTime(0),
+        checkpointKeepRedo(0),
+        checkpointAll(0),
+        checkpointOutputCheckpoint(1),
+        checkpointOutputLogSwitch(1),
         archReader(nullptr),
         waitingForWriter(false),
         context(""),
@@ -75,11 +80,11 @@ namespace OpenLogReplicator {
         outputBuffer(outputBuffer),
         dumpRedoLog(dumpRedoLog),
         dumpRawData(dumpRawData),
-        flags(flags),
+        flags(0),
         disableChecks(disableChecks),
-        redoReadSleep(redoReadSleep),
-        archReadSleep(archReadSleep),
-        redoVerifyDelay(redoVerifyDelay),
+        redoReadSleep(10000),
+        archReadSleep(10000000),
+        redoVerifyDelay(50000),
         version(0),
         conId(0),
         resetlogs(0),
@@ -969,7 +974,7 @@ namespace OpenLogReplicator {
             return;
 
         TRACE(TRACE2_SAVEPOINTS, "SAVEPOINT: writing scn: " << dec << savepointScn);
-        string fileName = savepointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
+        string fileName = checkpointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
 

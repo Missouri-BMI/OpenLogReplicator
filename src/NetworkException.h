@@ -24,12 +24,9 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #ifndef NETWORKEXCEPTION_H_
 #define NETWORKEXCEPTION_H_
 
-#define NETWORK_FAIL(x) throw NetworkException(x)
-
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class NetworkException: public exception {
     public:
         const char *msg;

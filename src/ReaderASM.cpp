@@ -25,7 +25,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     const char* ReaderASM::SQL_ASM_CLOSE("BEGIN dbms_diskgroup.close(:i); END;");
     const char* ReaderASM::SQL_ASM_GETFILEATR("BEGIN dbms_diskgroup.getfileattr(:i, :j, :k, :l); END;");
     const char* ReaderASM::SQL_ASM_OPEN("BEGIN dbms_diskgroup.open(:i, 'r', :j, :k, :l, :m, :n); END;");
@@ -157,5 +156,4 @@ namespace OpenLogReplicator {
         }
         return REDO_OK;
     }
-
 }

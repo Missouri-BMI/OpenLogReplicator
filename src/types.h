@@ -197,6 +197,9 @@ extern uint64_t trace, trace2;
 #define INFO(x)                                 {if (trace >= TRACE_INFO) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [INFO] " << x << endl; cerr << s.str();} }
 #define DEBUG(x)                                {if (trace >= TRACE_DEBUG) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [DEBUG] " << x << endl; cerr << s.str();} }
 #define TRACE(t,x)                              {if ((trace2 & (t)) != 0) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [TRACE] " << x << endl; cerr << s.str();} }
+#define CONFIG_FAIL(x)                          {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw ConfigurationException("error");}
+#define NETWORK_FAIL(x)                         {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw NetworkException("error");}
+#define REDOLOG_FAIL(x)                         {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw RedoLogException("error");}
 #define RUNTIME_FAIL(x)                         {if (trace >= TRACE_ERROR) {stringstream s; time_t now = time(nullptr); tm nowTm = *localtime(&now); char str[50]; strftime(str, sizeof(str), "%F %T", &nowTm); s << str << " [ERROR] " << x << endl; cerr << s.str(); }; throw RuntimeException("error");}
 
 #define TYPEINTXLEN                             4
@@ -205,7 +208,6 @@ extern uint64_t trace, trace2;
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class OracleAnalyzer;
 
     class uintX_t {

@@ -42,37 +42,36 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "RuntimeException.h"
 
 namespace OpenLogReplicator {
-
     const char OutputBuffer::map64[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     const char OutputBuffer::map16[17] = "0123456789abcdef";
 
     OutputBuffer::OutputBuffer(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat, uint64_t scnFormat,
             uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType) :
-            oracleAnalyzer(nullptr),
-            messageFormat(messageFormat),
-            xidFormat(xidFormat),
-            timestampFormat(timestampFormat),
-            charFormat(charFormat),
-            scnFormat(scnFormat),
-            unknownFormat(unknownFormat),
-            schemaFormat(schemaFormat),
-            columnFormat(columnFormat),
-            unknownType(unknownType),
-            messageLength(0),
-            valueLength(0),
-            lastTime(0),
-            lastScn(0),
-            lastXid(0),
-            valuesMax(0),
-            mergesMax(0),
-            id(0),
-            defaultCharacterMapId(0),
-            defaultCharacterNcharMapId(0),
-            writer(nullptr),
-            buffersAllocated(0),
-            firstBuffer(nullptr),
-            lastBuffer(nullptr),
-            msg(nullptr) {
+        oracleAnalyzer(nullptr),
+        messageFormat(messageFormat),
+        xidFormat(xidFormat),
+        timestampFormat(timestampFormat),
+        charFormat(charFormat),
+        scnFormat(scnFormat),
+        unknownFormat(unknownFormat),
+        schemaFormat(schemaFormat),
+        columnFormat(columnFormat),
+        unknownType(unknownType),
+        messageLength(0),
+        valueLength(0),
+        lastTime(0),
+        lastScn(0),
+        lastXid(0),
+        valuesMax(0),
+        mergesMax(0),
+        id(0),
+        defaultCharacterMapId(0),
+        defaultCharacterNcharMapId(0),
+        writer(nullptr),
+        buffersAllocated(0),
+        firstBuffer(nullptr),
+        lastBuffer(nullptr),
+        msg(nullptr) {
 
         characterMap[1] = new CharacterSet7bit("US7ASCII", CharacterSet7bit::unicode_map_US7ASCII);
         characterMap[2] = new CharacterSet8bit("WE8DEC", CharacterSet8bit::unicode_map_WE8DEC);

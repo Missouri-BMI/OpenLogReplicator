@@ -202,13 +202,6 @@ int main(int argc, char **argv) {
             INFO("adding source: " << aliasJSON.GetString());
 
             //optional
-            uint64_t flags = 0;
-            if (sourceJSON.HasMember("flags")) {
-                const Value& flagsJSON = sourceJSON["flags"];
-                flags = flagsJSON.GetUint64();
-            }
-
-            //optional
             uint64_t memoryMinMb = 32;
             if (sourceJSON.HasMember("memory-min-mb")) {
                 const Value& memoryMinMbJSON = sourceJSON["memory-min-mb"];
@@ -244,27 +237,6 @@ int main(int argc, char **argv) {
                 if (readBufferMax <= 1) {
                     CONFIG_FAIL("bad JSON, \"read-buffer-max-mb\" value should be at least " << dec << MEMORY_CHUNK_SIZE_MB * 2);
                 }
-            }
-
-            //optional
-            uint64_t redoReadSleep = 10000;
-            if (sourceJSON.HasMember("redo-read-sleep")) {
-                const Value& redoReadSleepJSON = sourceJSON["redo-read-sleep"];
-                redoReadSleep = redoReadSleepJSON.GetUint();
-            }
-
-            //optional
-            uint64_t archReadSleep = 10000000;
-            if (sourceJSON.HasMember("arch-read-sleep")) {
-                const Value& archReadSleepJSON = sourceJSON["arch-read-sleep"];
-                archReadSleep = archReadSleepJSON.GetUint();
-            }
-
-            //optional
-            uint64_t redoVerifyDelay = 50000;
-            if (sourceJSON.HasMember("redo-verify-delay")) {
-                const Value& redoVerifyDelayJSON = sourceJSON["redo-verify-delay"];
-                redoVerifyDelay = redoVerifyDelayJSON.GetUint();
             }
 
             const Value& nameJSON = getJSONfieldV(configFileName, sourceJSON, "name");
@@ -395,27 +367,6 @@ int main(int argc, char **argv) {
                 disableChecks = disableChecksJSON.GetUint64();
             }
 
-            //optional
-            const char *logArchiveFormat = "o1_mf_%t_%s_%h_.arc";
-            if (readerJSON.HasMember("log-archive-format")) {
-                const Value& logArchiveFormatJSON = readerJSON["log-archive-format"];
-                logArchiveFormat = logArchiveFormatJSON.GetString();
-            }
-
-            //optional
-            const char *savepointPath = "savepoint";
-            if (readerJSON.HasMember("savepoint-path")) {
-                const Value& savepointPathJSON = readerJSON["savepoint-path"];
-                savepointPath = savepointPathJSON.GetString();
-            }
-
-            //optional
-            const char *redoCopyPath = "";
-            if (readerJSON.HasMember("redo-copy-path")) {
-                const Value& redoCopyPathJSON = readerJSON["redo-copy-path"];
-                redoCopyPath = redoCopyPathJSON.GetString();
-            }
-
             const Value& readerTypeJSON = getJSONfieldV(configFileName, readerJSON, "type");
             if (strcmp(readerTypeJSON.GetString(), "online") == 0 ||
                     strcmp(readerTypeJSON.GetString(), "online-standby") == 0) {
@@ -436,10 +387,8 @@ int main(int argc, char **argv) {
                 const Value& serverJSON = getJSONfieldV(configFileName, readerJSON, "server");
                 server = serverJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                        memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, user, password,
-                        server, isStandby);
+                oracleAnalyzer = new OracleAnalyzerOnline(outputBuffer, dumpRedoLog, dumpRawData, aliasJSON.GetString(),
+                        nameJSON.GetString(), memoryMinMb, memoryMaxMb, readBufferMax, disableChecks, user, password, server, isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -481,9 +430,8 @@ int main(int argc, char **argv) {
 
             } else if (strcmp(readerTypeJSON.GetString(), "offline") == 0) {
 
-                oracleAnalyzer = new OracleAnalyzer(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(), dumpRedoLog,
-                        dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb,
-                        memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath);
+                oracleAnalyzer = new OracleAnalyzer(outputBuffer, dumpRedoLog, dumpRawData, aliasJSON.GetString(),
+                        nameJSON.GetString(), memoryMinMb, memoryMaxMb, readBufferMax, disableChecks);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -536,10 +484,9 @@ int main(int argc, char **argv) {
                 const Value& serverASMJSON = getJSONfieldV(configFileName, readerJSON, "server-asm");
                 serverASM = serverASMJSON.GetString();
 
-                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                        dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                        memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, user, password,
-                        server, userASM, passwordASM, serverASM, isStandby);
+                oracleAnalyzer = new OracleAnalyzerOnlineASM(outputBuffer, dumpRedoLog, dumpRawData, aliasJSON.GetString(),
+                        nameJSON.GetString(), memoryMinMb, memoryMaxMb, readBufferMax, disableChecks, user, password, server,
+                        userASM, passwordASM, serverASM, isStandby);
 
                 if (oracleAnalyzer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzer) << " bytes memory (for: oracle analyzer)");
@@ -564,7 +511,6 @@ int main(int argc, char **argv) {
 #endif /*LINK_LIBRARY_OCI*/
 
             } else if (strcmp(readerTypeJSON.GetString(), "batch") == 0) {
-                 flags |= REDO_FLAGS_ARCH_ONLY;
 
                  //optional
                  typeconid conId = 0;
@@ -573,9 +519,9 @@ int main(int argc, char **argv) {
                      conId = conIdJSON.GetUint();
                  }
 
-                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, aliasJSON.GetString(), nameJSON.GetString(),
-                         dumpRedoLog, dumpRawData, flags, disableChecks, redoReadSleep, archReadSleep, redoVerifyDelay,
-                         memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat, savepointPath, redoCopyPath, conId);
+                 oracleAnalyzer = new OracleAnalyzerBatch(outputBuffer, dumpRedoLog, dumpRawData, aliasJSON.GetString(),
+                         nameJSON.GetString(), memoryMinMb, memoryMaxMb, readBufferMax, disableChecks, conId);
+                 oracleAnalyzer->flags |= REDO_FLAGS_ARCH_ONLY;
 
                  if (oracleAnalyzer == nullptr) {
                      RUNTIME_FAIL("couldn't allocate " << dec << sizeof(OracleAnalyzerBatch) << " bytes memory (for: oracle analyzer)");
@@ -634,6 +580,92 @@ int main(int argc, char **argv) {
                     }
                 } else
                     element->keysStr = "";
+            }
+
+            //optional
+            if (sourceJSON.HasMember("flags")) {
+                const Value& flagsJSON = sourceJSON["flags"];
+                oracleAnalyzer->flags |= flagsJSON.GetUint64();
+            }
+
+            //optional
+            if (sourceJSON.HasMember("redo-verify-delay")) {
+                const Value& redoVerifyDelayJSON = sourceJSON["redo-verify-delay"];
+                oracleAnalyzer->redoVerifyDelay = redoVerifyDelayJSON.GetUint64();
+            }
+
+            //optional
+            if (sourceJSON.HasMember("arch-read-sleep")) {
+                const Value& archReadSleepJSON = sourceJSON["arch-read-sleep"];
+                oracleAnalyzer->archReadSleep = archReadSleepJSON.GetUint64();
+            }
+
+            //optional
+            if (sourceJSON.HasMember("redo-read-sleep")) {
+                const Value& redoReadSleepJSON = sourceJSON["redo-read-sleep"];
+                oracleAnalyzer->redoReadSleep = redoReadSleepJSON.GetUint64();
+            }
+
+            //optional
+            if (readerJSON.HasMember("redo-copy-path")) {
+                const Value& redoCopyPathJSON = readerJSON["redo-copy-path"];
+                oracleAnalyzer->redoCopyPath = redoCopyPathJSON.GetString();
+            }
+
+            //optional
+            if (readerJSON.HasMember("log-archive-format")) {
+                const Value& logArchiveFormatJSON = readerJSON["log-archive-format"];
+                oracleAnalyzer->logArchiveFormat = logArchiveFormatJSON.GetString();
+            }
+
+            //optional
+            if (sourceJSON.HasMember("checkpoint")) {
+                const Value& checkpointJSON = getJSONfieldV(configFileName, sourceJSON, "checkpoint");
+
+                if (checkpointJSON.HasMember("path")) {
+                    const Value& checkpointPathJSON = checkpointJSON["path"];
+                    oracleAnalyzer->checkpointPath = checkpointPathJSON.GetString();
+                }
+
+                if (checkpointJSON.HasMember("interval-time")) {
+                    const Value& checkpointIntervalTimeJSON = checkpointJSON["interval-time"];
+                    oracleAnalyzer->checkpointIntervalTime = checkpointIntervalTimeJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("interval-mb")) {
+                    const Value& checkpointIntervalMBJSON = checkpointJSON["interval-mb"];
+                    oracleAnalyzer->checkpointIntervalMB = checkpointIntervalMBJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("keep-last")) {
+                    const Value& checkpointKeepLastJSON = checkpointJSON["keep-last"];
+                    oracleAnalyzer->checkpointKeepLast = checkpointKeepLastJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("keep-time")) {
+                    const Value& checkpointKeepTimeJSON = checkpointJSON["keep-time"];
+                    oracleAnalyzer->checkpointKeepTime = checkpointKeepTimeJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("keep-redo")) {
+                    const Value& checkpointKeepRedoJSON = checkpointJSON["keep-redo"];
+                    oracleAnalyzer->checkpointKeepRedo = checkpointKeepRedoJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("all")) {
+                    const Value& checkpointAllJSON = checkpointJSON["all"];
+                    oracleAnalyzer->checkpointAll = checkpointAllJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("output-checkpoint")) {
+                    const Value& checkpointOutputCheckpointJSON = checkpointJSON["output-checkpoint"];
+                    oracleAnalyzer->checkpointOutputCheckpoint = checkpointOutputCheckpointJSON.GetUint64();
+                }
+
+                if (checkpointJSON.HasMember("output-log-switch")) {
+                    const Value& checkpointOutputLogSwitchJSON = checkpointJSON["output-log-switch"];
+                    oracleAnalyzer->checkpointOutputLogSwitch = checkpointOutputLogSwitchJSON.GetUint64();
+                }
             }
 
             if (pthread_create(&oracleAnalyzer->pthread, nullptr, &Thread::runStatic, (void*)oracleAnalyzer)) {

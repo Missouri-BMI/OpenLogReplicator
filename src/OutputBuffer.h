@@ -31,7 +31,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class CharacterSet;
     class OracleAnalyzer;
     class OracleObject;
@@ -114,7 +113,7 @@ namespace OpenLogReplicator {
         void valueBufferAppendHex(typeunicode value, uint64_t length);
         void processValue(OracleObject *object, typeCOL col, const uint8_t *data, uint64_t length, uint64_t typeNo, uint64_t charsetId);
         virtual void appendRowid(typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot) = 0;
-        virtual void appendHeader(bool first) = 0;
+        virtual void appendHeader(bool first, bool showXid) = 0;
         virtual void appendSchema(OracleObject *object, typeDATAOBJ dataObj) = 0;
 
     public:
@@ -149,8 +148,8 @@ namespace OpenLogReplicator {
         void processDeleteMultiple(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
         void processDML(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2, uint64_t type);
         void processDDLheader(RedoLogRecord *redoLogRecord1);
-        //virtual void processCheckpoint(typeSCN scn, typetime timeVal) = 0;
-        //virtual void processSwitch(typeSCN scn, typetime timeVal) = 0;
+        virtual void processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) = 0;
+        virtual void processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) = 0;
     };
 }
 

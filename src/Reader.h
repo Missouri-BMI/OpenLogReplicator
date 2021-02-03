@@ -56,7 +56,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class OracleAnalyzer;
 
     class Reader : public Thread {
@@ -89,6 +88,7 @@ namespace OpenLogReplicator {
         typeBLK numBlocks;
         typeresetlogs resetlogsHeader;
         typeactivation activationHeader;
+        typetime firstTimeHeader;
         typeSCN firstScnHeader;
         typeSCN firstScn;
         typeSCN nextScnHeader;

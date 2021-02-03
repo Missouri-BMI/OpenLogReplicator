@@ -24,13 +24,12 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "RowId.h"
 
 namespace OpenLogReplicator {
-
     OutputBufferJson::OutputBufferJson(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat,
             uint64_t scnFormat, uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType) :
-            OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat,
-                    unknownType),
-            hasPreviousRedo(false),
-            hasPreviousColumn(false) {
+        OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat,
+                unknownType),
+        hasPreviousRedo(false),
+        hasPreviousColumn(false) {
     }
 
     OutputBufferJson::~OutputBufferJson() {
@@ -202,44 +201,54 @@ namespace OpenLogReplicator {
         outputBufferAppend('"');
     }
 
-    void OutputBufferJson::appendHeader(bool first) {
+    void OutputBufferJson::appendHeader(bool first, bool showXid) {
+        bool beforeVal = false;
         if (first || (scnFormat & SCN_FORMAT_ALL_PAYLOADS) != 0) {
             if ((scnFormat & SCN_FORMAT_HEX) != 0) {
                 outputBufferAppend("\"scns\":\"0x");
                 appendHex(lastScn, 16);
-                outputBufferAppend("\",");
+                outputBufferAppend('"');
             } else {
                 outputBufferAppend("\"scn\":");
                 appendDec(lastScn);
-                outputBufferAppend(',');
             }
+            beforeVal = true;
         }
 
         if (first || (timestampFormat & TIMESTAMP_FORMAT_ALL_PAYLOADS) != 0) {
+            if (beforeVal)
+                outputBufferAppend(',');
+
             if ((timestampFormat & TIMESTAMP_FORMAT_ISO8601) != 0) {
                 outputBufferAppend("\"tms\":\"");
                 char iso[21];
                 lastTime.toISO8601(iso);
                 outputBufferAppend(iso);
-                outputBufferAppend("\",");
+                outputBufferAppend('"');
             } else {
                 outputBufferAppend("\"tm\":");
                 appendDec(lastTime.toTime() * 1000);
-                outputBufferAppend(',');
             }
+
+            beforeVal = true;
         }
 
-        if (xidFormat == XID_FORMAT_TEXT) {
-            outputBufferAppend("\"xid\":\"");
-            appendDec(USN(lastXid));
-            outputBufferAppend('.');
-            appendDec(SLT(lastXid));
-            outputBufferAppend('.');
-            appendDec(SQN(lastXid));
-            outputBufferAppend('"');
-        } else {
-            outputBufferAppend("\"xidn\":");
-            appendDec(lastXid);
+        if (showXid) {
+            if (beforeVal)
+                 outputBufferAppend(',');
+
+            if (xidFormat == XID_FORMAT_TEXT) {
+                outputBufferAppend("\"xid\":\"");
+                appendDec(USN(lastXid));
+                outputBufferAppend('.');
+                appendDec(SLT(lastXid));
+                outputBufferAppend('.');
+                appendDec(SQN(lastXid));
+                outputBufferAppend('"');
+            } else {
+                outputBufferAppend("\"xidn\":");
+                appendDec(lastXid);
+            }
         }
     }
 
@@ -515,7 +524,7 @@ namespace OpenLogReplicator {
 
         outputBufferBegin(0);
         outputBufferAppend('{');
-        appendHeader(true);
+        appendHeader(true, true);
 
         if (messageFormat == MESSAGE_FORMAT_FULL)
             outputBufferAppend(",\"payload\":[");
@@ -531,7 +540,7 @@ namespace OpenLogReplicator {
         else {
             outputBufferBegin(0);
             outputBufferAppend('{');
-            appendHeader(false);
+            appendHeader(false, true);
             outputBufferAppend(",\"payload\":[{\"op\":\"commit\"}]}");
         }
         outputBufferCommit();
@@ -549,7 +558,7 @@ namespace OpenLogReplicator {
             else
                 outputBufferBegin(0);
             outputBufferAppend('{');
-            appendHeader(false);
+            appendHeader(false, true);
             outputBufferAppend(",\"payload\":[");
         }
 
@@ -603,7 +612,7 @@ namespace OpenLogReplicator {
             else
                 outputBufferBegin(0);
             outputBufferAppend('{');
-            appendHeader(false);
+            appendHeader(false, true);
             outputBufferAppend(",\"payload\":[");
         }
 
@@ -684,7 +693,7 @@ namespace OpenLogReplicator {
             else
                 outputBufferBegin(0);
             outputBufferAppend('{');
-            appendHeader(false);
+            appendHeader(false, true);
             outputBufferAppend(",\"payload\":[");
         }
 
@@ -738,7 +747,7 @@ namespace OpenLogReplicator {
             else
                 outputBufferBegin(0);
             outputBufferAppend('{');
-            appendHeader(false);
+            appendHeader(false, true);
             outputBufferAppend(",\"payload\":[");
         }
 
@@ -752,5 +761,33 @@ namespace OpenLogReplicator {
             outputBufferAppend("]}");
             outputBufferCommit();
         }
+    }
+
+    void OutputBufferJson::processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) {
+        lastTime = timeVal;
+        lastScn = scn;
+        outputBufferBegin(0);
+        outputBufferAppend('{');
+        appendHeader(false, false);
+        outputBufferAppend(",\"payload\":[{\"op\":\"checkpoint\",\"seq\":");
+        appendDec(sequence);
+        outputBufferAppend(",\"offset\":");
+        appendDec(offset);
+        outputBufferAppend("}");
+        outputBufferAppend("]}");
+        outputBufferCommit();
+    }
+
+    void OutputBufferJson::processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) {
+        lastTime = timeVal;
+        lastScn = scn;
+        outputBufferBegin(0);
+        outputBufferAppend('{');
+        appendHeader(false, false);
+        outputBufferAppend(",\"payload\":[{\"op\":\"switch\",\"seq\":");
+        appendDec(sequence);
+        outputBufferAppend("}");
+        outputBufferAppend("]}");
+        outputBufferCommit();
     }
 }

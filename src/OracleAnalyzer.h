@@ -33,7 +33,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class RedoLog;
     class OutputBuffer;
     class Reader;
@@ -77,10 +76,8 @@ namespace OpenLogReplicator {
         virtual void refreshSchema(void);
 
     public:
-        OracleAnalyzer(OutputBuffer *outputBuffer, const char *alias, const char *database,
-                uint64_t dumpRedoLog, uint64_t dumpData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
-                uint64_t archReadSleep, uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
-                const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath);
+        OracleAnalyzer(OutputBuffer *outputBuffer, uint64_t dumpRedoLog, uint64_t dumpRawData, const char *alias, const char *database,
+                uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax, uint64_t disableChecks);
         virtual ~OracleAnalyzer();
 
         string database;
@@ -90,8 +87,17 @@ namespace OpenLogReplicator {
         string dbBlockChecksum;
         string logArchiveFormat;
         string logArchiveDest;
-        string savepointPath;
         string redoCopyPath;
+        string checkpointPath;
+        uint64_t checkpointIntervalTime;
+        uint64_t checkpointIntervalMB;
+        uint64_t checkpointKeepLast;
+        uint64_t checkpointKeepTime;
+        uint64_t checkpointKeepRedo;
+        uint64_t checkpointAll;
+        uint64_t checkpointOutputCheckpoint;
+        uint64_t checkpointOutputLogSwitch;
+
         Reader *archReader;
         set<Reader*> readers;
         bool waitingForWriter;

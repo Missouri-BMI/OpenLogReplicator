@@ -24,12 +24,9 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #ifndef CONFIGURATIONEXCEPTION_H_
 #define CONFIGURATIONEXCEPTION_H_
 
-#define CONFIG_FAIL(x) {stringstream s; s << "ERROR: " << x << endl; cerr << s.str(); throw ConfigurationException("error");}
-
 using namespace std;
 
 namespace OpenLogReplicator {
-
     class ConfigurationException: public exception {
     public:
         const char *msg;

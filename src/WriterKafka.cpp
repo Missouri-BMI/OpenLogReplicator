@@ -26,7 +26,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     WriterKafka::WriterKafka(const char *alias, OracleAnalyzer *oracleAnalyzer, const char *brokers, const char *topic,
             uint64_t maxMessageMb, uint64_t maxMessages, uint64_t pollInterval, uint64_t checkpointInterval, uint64_t queueSize,
             typeSCN startScn, typeSEQ startSeq, const char* startTime, uint64_t startTimeRel, uint64_t enableIdempotence) :

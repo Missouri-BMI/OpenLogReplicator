@@ -36,7 +36,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     const char* OracleAnalyzerOnline::SQL_GET_ARCHIVE_LOG_LIST(
             "SELECT"
             "   NAME"
@@ -572,21 +571,17 @@ namespace OpenLogReplicator {
             " WHERE"
             "   U.NAME LIKE UPPER(:j)");
 
-    OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, const char *alias, const char *database,
-            uint64_t dumpRedoLog, uint64_t dumpRawData, uint64_t flags, uint64_t disableChecks, uint64_t redoReadSleep,
-            uint64_t archReadSleep, uint64_t redoVerifyDelay, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
-            const char *logArchiveFormat, const char *savepointPath, const char *redoCopyPath, const char *user, const char *password,
-            const char *connectString, bool isStandby) :
-                    OracleAnalyzer(outputBuffer, alias, database, dumpRedoLog, dumpRawData, flags, disableChecks,
-                    redoReadSleep, archReadSleep, redoVerifyDelay, memoryMinMb, memoryMaxMb, readBufferMax, logArchiveFormat,
-                    savepointPath, redoCopyPath),
-            isStandby(isStandby),
-            user(user),
-            password(password),
-            connectString(connectString),
-            env(nullptr),
-            conn(nullptr),
-            keepConnection(false) {
+    OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, uint64_t dumpRedoLog, uint64_t dumpRawData,
+            const char *alias, const char *database, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
+            uint64_t disableChecks, const char *user, const char *password, const char *connectString, bool isStandby) :
+        OracleAnalyzer(outputBuffer, dumpRedoLog, dumpRawData, alias, database, disableChecks, memoryMinMb, memoryMaxMb, readBufferMax),
+        isStandby(isStandby),
+        user(user),
+        password(password),
+        connectString(connectString),
+        env(nullptr),
+        conn(nullptr),
+        keepConnection(false) {
 
         env = new DatabaseEnvironment();
     }
@@ -1722,7 +1717,6 @@ namespace OpenLogReplicator {
         if (!((OracleAnalyzerOnline*)oracleAnalyzer)->keepConnection)
             ((OracleAnalyzerOnline*)oracleAnalyzer)->closeConnection();
     }
-
 
     const char* OracleAnalyzerOnline::getModeName(void) const {
         return "online";

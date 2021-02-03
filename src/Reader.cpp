@@ -31,7 +31,6 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 using namespace std;
 
 namespace OpenLogReplicator {
-
     Reader::Reader(const char *alias, OracleAnalyzer *oracleAnalyzer, int64_t group) :
         Thread(alias),
         oracleAnalyzer(oracleAnalyzer),
@@ -275,6 +274,7 @@ namespace OpenLogReplicator {
         numBlocksHeader = oracleAnalyzer->read32(headerBuffer + blockSize + 156);
         resetlogsHeader = oracleAnalyzer->read32(headerBuffer + blockSize + 160);
         firstScnHeader = oracleAnalyzer->readSCN(headerBuffer + blockSize + 180);
+        firstTimeHeader = oracleAnalyzer->read32(headerBuffer + blockSize + 188);
         nextScnHeader = oracleAnalyzer->readSCN(headerBuffer + blockSize + 192);
 
         uint64_t badBlockCrcCount = 0;

@@ -25,15 +25,15 @@ along with OpenLogReplicator; see the file LICENSE;  If not see
 #include "RuntimeException.h"
 
 namespace OpenLogReplicator {
-
     OutputBufferProtobuf::OutputBufferProtobuf(uint64_t messageFormat, uint64_t xidFormat, uint64_t timestampFormat, uint64_t charFormat,
             uint64_t scnFormat, uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType) :
-            OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat,
-                    unknownType),
-            redoResponsePB(nullptr),
-            valuePB(nullptr),
-            payloadPB(nullptr),
-            schemaPB(nullptr) {
+        OutputBuffer(messageFormat, xidFormat, timestampFormat, charFormat, scnFormat, unknownFormat, schemaFormat, columnFormat,
+                unknownType),
+        redoResponsePB(nullptr),
+        valuePB(nullptr),
+        payloadPB(nullptr),
+        schemaPB(nullptr) {
+
         GOOGLE_PROTOBUF_VERIFY_VERSION;
     }
 
@@ -126,7 +126,7 @@ namespace OpenLogReplicator {
         payloadPB->set_rid(str, 18);
     }
 
-    void OutputBufferProtobuf::appendHeader(bool first) {
+    void OutputBufferProtobuf::appendHeader(bool first, bool showXid) {
         redoResponsePB->set_code(pb::ResponseCode::PAYLOAD);
         if (first || (scnFormat & SCN_FORMAT_ALL_PAYLOADS) != 0) {
             if ((scnFormat & SCN_FORMAT_HEX) != 0) {
@@ -149,16 +149,18 @@ namespace OpenLogReplicator {
             }
         }
 
-        if (xidFormat == XID_FORMAT_TEXT) {
-            stringstream sb;
-            sb << (uint64_t)USN(lastXid);
-            sb << '.';
-            sb << (uint64_t)SLT(lastXid);
-            sb << '.';
-            sb << (uint64_t)SQN(lastXid);
-            redoResponsePB->set_xid(sb.str());
-        } else {
-            redoResponsePB->set_xidn(lastXid);
+        if (showXid) {
+            if (xidFormat == XID_FORMAT_TEXT) {
+                stringstream sb;
+                sb << (uint64_t)USN(lastXid);
+                sb << '.';
+                sb << (uint64_t)SLT(lastXid);
+                sb << '.';
+                sb << (uint64_t)SQN(lastXid);
+                redoResponsePB->set_xid(sb.str());
+            } else {
+                redoResponsePB->set_xidn(lastXid);
+            }
         }
     }
 
@@ -305,7 +307,7 @@ namespace OpenLogReplicator {
             RUNTIME_FAIL("PB begin processing failed, message already exists, internal error");
         }
         redoResponsePB = new pb::RedoResponse;
-        appendHeader(true);
+        appendHeader(true, true);
 
         if (messageFormat == MESSAGE_FORMAT_SHORT) {
             redoResponsePB->add_payload();
@@ -336,7 +338,7 @@ namespace OpenLogReplicator {
             }
             outputBufferBegin(0);
             redoResponsePB = new pb::RedoResponse;
-            appendHeader(true);
+            appendHeader(true, true);
 
             redoResponsePB->add_payload();
             payloadPB = redoResponsePB->mutable_payload(redoResponsePB->payload_size() - 1);
@@ -371,7 +373,7 @@ namespace OpenLogReplicator {
                 outputBufferBegin(0);
 
             redoResponsePB = new pb::RedoResponse;
-            appendHeader(true);
+            appendHeader(true, true);
         }
 
         redoResponsePB->add_payload();
@@ -446,7 +448,7 @@ namespace OpenLogReplicator {
                 outputBufferBegin(0);
 
             redoResponsePB = new pb::RedoResponse;
-            appendHeader(true);
+            appendHeader(true, true);
         }
 
         redoResponsePB->add_payload();
@@ -555,7 +557,7 @@ namespace OpenLogReplicator {
             else
                 outputBufferBegin(0);
             redoResponsePB = new pb::RedoResponse;
-            appendHeader(true);
+            appendHeader(true, true);
         }
 
         redoResponsePB->add_payload();
@@ -625,7 +627,7 @@ namespace OpenLogReplicator {
                 RUNTIME_FAIL("PB commit processing failed, message already exists, internal error");
             }
             redoResponsePB = new pb::RedoResponse;
-            appendHeader(true);
+            appendHeader(true, true);
 
             redoResponsePB->add_payload();
             payloadPB = redoResponsePB->mutable_payload(redoResponsePB->payload_size() - 1);
@@ -645,5 +647,11 @@ namespace OpenLogReplicator {
             outputBufferAppend(output);
         }
         outputBufferCommit();
+    }
+
+    void OutputBufferProtobuf::processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) {
+    }
+
+    void OutputBufferProtobuf::processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) {
     }
 }
