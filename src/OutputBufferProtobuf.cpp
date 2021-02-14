@@ -115,7 +115,7 @@ namespace OpenLogReplicator {
         valuePB->set_name(columnName);
     }
 
-    void OutputBufferProtobuf::columnTimestamp(string &columnName, struct tm &timeVal, uint64_t fraction, const char *tz) {
+    void OutputBufferProtobuf::columnTimestamp(string &columnName, struct tm &time_, uint64_t fraction, const char *tz) {
         valuePB->set_name(columnName);
     }
 
@@ -297,8 +297,8 @@ namespace OpenLogReplicator {
         buf[length] = 0;
     }
 
-    void OutputBufferProtobuf::processBegin(typeSCN scn, typetime timeVal, typeXID xid) {
-        lastTime = timeVal;
+    void OutputBufferProtobuf::processBegin(typeSCN scn, typetime time_, typeXID xid) {
+        lastTime = time_;
         lastScn = scn;
         lastXid = xid;
         outputBufferBegin(0);
@@ -649,9 +649,30 @@ namespace OpenLogReplicator {
         outputBufferCommit();
     }
 
-    void OutputBufferProtobuf::processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) {
-    }
+    void OutputBufferProtobuf::processCheckpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool redo) {
+        if (redoResponsePB != nullptr) {
+            RUNTIME_FAIL("PB commit processing failed, message already exists, internal error");
+        }
+        redoResponsePB = new pb::RedoResponse;
+        appendHeader(true, true);
 
-    void OutputBufferProtobuf::processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) {
+        redoResponsePB->add_payload();
+        payloadPB = redoResponsePB->mutable_payload(redoResponsePB->payload_size() - 1);
+        payloadPB->set_op(pb::CHKPT);
+        payloadPB->set_seq(sequence);
+        payloadPB->set_pos(offset);
+        payloadPB->set_redo(redo);
+
+        string output;
+        bool ret = redoResponsePB->SerializeToString(&output);
+        delete redoResponsePB;
+        redoResponsePB = nullptr;
+
+        if (!ret) {
+            RUNTIME_FAIL("PB commit processing failed, error serializing to string");
+        }
+        outputBufferAppend(output);
+
+        outputBufferCommit();
     }
 }

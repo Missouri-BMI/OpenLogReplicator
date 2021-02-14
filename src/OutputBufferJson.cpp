@@ -516,8 +516,8 @@ namespace OpenLogReplicator {
         return result;
     }
 
-    void OutputBufferJson::processBegin(typeSCN scn, typetime timeVal, typeXID xid) {
-        lastTime = timeVal;
+    void OutputBufferJson::processBegin(typeSCN scn, typetime time_, typeXID xid) {
+        lastTime = time_;
         lastScn = scn;
         lastXid = xid;
         hasPreviousRedo = false;
@@ -763,31 +763,19 @@ namespace OpenLogReplicator {
         }
     }
 
-    void OutputBufferJson::processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) {
-        lastTime = timeVal;
+    void OutputBufferJson::processCheckpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool redo) {
+        lastTime = time_;
         lastScn = scn;
         outputBufferBegin(0);
         outputBufferAppend('{');
         appendHeader(false, false);
-        outputBufferAppend(",\"payload\":[{\"op\":\"checkpoint\",\"seq\":");
+        outputBufferAppend(",\"payload\":[{\"op\":\"chkpt\",\"seq\":");
         appendDec(sequence);
-        outputBufferAppend(",\"offset\":");
+        outputBufferAppend(",\"pos\":");
         appendDec(offset);
-        outputBufferAppend("}");
-        outputBufferAppend("]}");
-        outputBufferCommit();
-    }
-
-    void OutputBufferJson::processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) {
-        lastTime = timeVal;
-        lastScn = scn;
-        outputBufferBegin(0);
-        outputBufferAppend('{');
-        appendHeader(false, false);
-        outputBufferAppend(",\"payload\":[{\"op\":\"switch\",\"seq\":");
-        appendDec(sequence);
-        outputBufferAppend("}");
-        outputBufferAppend("]}");
+        if (redo)
+            outputBufferAppend(",\"redo\":true");
+        outputBufferAppend("}]}");
         outputBufferCommit();
     }
 }

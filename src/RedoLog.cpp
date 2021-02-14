@@ -961,8 +961,10 @@ namespace OpenLogReplicator {
                 }
                 printHeaderInfo();
             }
-            oracleAnalyzer->outputBuffer->processSwitch(reader->firstScn, reader->firstTimeHeader, sequence);
         }
+
+        if (lwnConfirmedBlock == 2)
+            oracleAnalyzer->checkpointLastOffset = 0;
 
         clock_t cStart = clock();
         {
@@ -1072,6 +1074,8 @@ namespace OpenLogReplicator {
                 }
 
                 ++currentBlock;
+                tmpBufferStart += reader->blockSize;
+                redoBufferPos += reader->blockSize;
 
                 //checkpoint
                 if (currentBlock == lwnEndBlock && lwnNumCnt == lwnNumMax) {
@@ -1085,7 +1089,9 @@ namespace OpenLogReplicator {
                                 lwnScnMax = lwnMembers[i]->scn;
                         }
 
-                        oracleAnalyzer->outputBuffer->processCheckpoint(lwnScn, lwnTimestamp, sequence, currentBlock * reader->blockSize);
+                        bool switchRedo = (tmpBufferStart == reader->bufferEnd) && (reader->ret == REDO_FINISHED);
+                        if (oracleAnalyzer->checkpoint(lwnScn, lwnTimestamp, sequence, currentBlock * reader->blockSize, switchRedo))
+                            oracleAnalyzer->outputBuffer->processCheckpoint(lwnScn, lwnTimestamp, sequence, currentBlock * reader->blockSize, switchRedo);
                     } catch (RedoLogException &ex) {
                         if ((oracleAnalyzer->flags & REDO_FLAGS_ON_ERROR_CONTINUE) == 0) {
                             RUNTIME_FAIL("runtime error, aborting further redo log processing");
@@ -1104,8 +1110,6 @@ namespace OpenLogReplicator {
                     lwnConfirmedBlock = currentBlock;
                 }
 
-                tmpBufferStart += reader->blockSize;
-                redoBufferPos += reader->blockSize;
                 if (redoBufferPos == MEMORY_CHUNK_SIZE) {
                     redoBufferPos = 0;
                     reader->bufferFree(redoBufferNum);

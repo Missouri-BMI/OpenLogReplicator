@@ -51,8 +51,7 @@ namespace OpenLogReplicator {
                 //|| type == 1 //create table
                 || type == 12 // drop table
                 || type == 15 // alter table
-                || type == 86 // truncate partition
-        )
+                || type == 86) // truncate partition
             validDDL = true;
 
         //temporary object

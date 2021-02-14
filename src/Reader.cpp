@@ -287,7 +287,7 @@ namespace OpenLogReplicator {
             if (badBlockCrcCount == REDO_BAD_CDC_MAX_CNT)
                 return REDO_ERROR;
 
-            usleep(oracleAnalyzer->redoReadSleep);
+            usleep(oracleAnalyzer->redoReadSleepUS);
             ret = checkBlockHeader(headerBuffer + blockSize, 1, true);
             TRACE(TRACE2_DISK, "DISK: block: 1 check: " << ret);
         }
@@ -457,10 +457,10 @@ namespace OpenLogReplicator {
                             uint64_t redoBufferNum = ((bufferEnd + numBlock * blockSize) / MEMORY_CHUNK_SIZE) % oracleAnalyzer->readBufferMax;
 
                             time_t *readTime = (time_t*)(redoBufferList[redoBufferNum] + redoBufferPos);
-                            if (*readTime + oracleAnalyzer->redoVerifyDelay < loopTime)
+                            if (*readTime + oracleAnalyzer->redoVerifyDelayUS < loopTime)
                                 ++goodBlocks;
                             else {
-                                read2Time = *readTime + oracleAnalyzer->redoVerifyDelay;
+                                read2Time = *readTime + oracleAnalyzer->redoVerifyDelayUS;
                                 break;
                             }
                         }
@@ -531,7 +531,7 @@ namespace OpenLogReplicator {
 
                     //#1 read
                     if (bufferScan < fileSize && bufferStart + MEMORY_CHUNK_SIZE > bufferScan
-                            && (!reachedZero || lastReadTime + oracleAnalyzer->redoReadSleep < loopTime)) {
+                            && (!reachedZero || lastReadTime + oracleAnalyzer->redoReadSleepUS < loopTime)) {
                         uint64_t toRead = readSize(lastRead);
                         if (bufferScan + toRead - bufferStart > MEMORY_CHUNK_SIZE)
                             toRead = MEMORY_CHUNK_SIZE - bufferScan + bufferStart;
@@ -559,7 +559,7 @@ namespace OpenLogReplicator {
                             ret = REDO_ERROR;
                             break;
                         }
-                        if (actualRead > 0 && fileCopyDes > 0 && (oracleAnalyzer->redoVerifyDelay == 0 || group == 0)) {
+                        if (actualRead > 0 && fileCopyDes > 0 && (oracleAnalyzer->redoVerifyDelayUS == 0 || group == 0)) {
                             if (pwrite(fileCopyDes, redoBufferList[redoBufferNum] + redoBufferPos, actualRead, bufferEnd) != actualRead) {
                                 ERROR("error writing " << dec << actualRead << " bytes at pos " << 0 << " to redo log copy file");
                                 ret = REDO_ERROR;
@@ -583,7 +583,7 @@ namespace OpenLogReplicator {
                         }
 
                         //treat bad blocks as empty
-                        if (tmpRet == REDO_BAD_CRC && oracleAnalyzer->redoVerifyDelay > 0 && group != 0)
+                        if (tmpRet == REDO_BAD_CRC && oracleAnalyzer->redoVerifyDelayUS > 0 && group != 0)
                             tmpRet = REDO_EMPTY;
 
                         if (tmpRet != REDO_OK && (tmpRet != REDO_EMPTY || group == 0)) {
@@ -599,14 +599,14 @@ namespace OpenLogReplicator {
                                 break;
                             }
                             reachedZero = true;
-                            read1Time = lastReadTime + oracleAnalyzer->redoReadSleep;
+                            read1Time = lastReadTime + oracleAnalyzer->redoReadSleepUS;
                         } else
                             reachedZero = false;
 
                         lastRead = goodBlocks * blockSize;
                         lastReadTime = getTime();
                         if (goodBlocks > 0) {
-                            if (oracleAnalyzer->redoVerifyDelay > 0 && group != 0) {
+                            if (oracleAnalyzer->redoVerifyDelayUS > 0 && group != 0) {
                                 bufferScan += goodBlocks * blockSize;
 
                                 for (uint64_t numBlock = 0; numBlock < goodBlocks; ++numBlock) {

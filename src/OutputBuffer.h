@@ -108,7 +108,7 @@ namespace OpenLogReplicator {
         virtual void columnString(string &columnName) = 0;
         virtual void columnNumber(string &columnName, uint64_t precision, uint64_t scale) = 0;
         virtual void columnRaw(string &columnName, const uint8_t *data, uint64_t length) = 0;
-        virtual void columnTimestamp(string &columnName, struct tm &timeVal, uint64_t fraction, const char *tz) = 0;
+        virtual void columnTimestamp(string &columnName, struct tm &time_, uint64_t fraction, const char *tz) = 0;
         void valueBufferAppend(uint8_t value);
         void valueBufferAppendHex(typeunicode value, uint64_t length);
         void processValue(OracleObject *object, typeCOL col, const uint8_t *data, uint64_t length, uint64_t typeNo, uint64_t charsetId);
@@ -138,7 +138,7 @@ namespace OpenLogReplicator {
         void setWriter(Writer *writer);
         void setNlsCharset(string &nlsCharset, string &nlsNcharCharset);
 
-        virtual void processBegin(typeSCN scn, typetime timeVal, typeXID xid) = 0;
+        virtual void processBegin(typeSCN scn, typetime time_, typeXID xid) = 0;
         virtual void processCommit(void) = 0;
         virtual void processInsert(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
         virtual void processUpdate(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid) = 0;
@@ -148,8 +148,7 @@ namespace OpenLogReplicator {
         void processDeleteMultiple(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2);
         void processDML(RedoLogRecord *redoLogRecord1, RedoLogRecord *redoLogRecord2, uint64_t type);
         void processDDLheader(RedoLogRecord *redoLogRecord1);
-        virtual void processCheckpoint(typeSCN scn, typetime timeVal, typeSEQ sequence, uint64_t offset) = 0;
-        virtual void processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence) = 0;
+        virtual void processCheckpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool redo) = 0;
     };
 }
 

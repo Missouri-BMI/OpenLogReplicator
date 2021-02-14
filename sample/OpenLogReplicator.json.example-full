@@ -31,11 +31,11 @@
       },
       "checkpoint": {
         "path": "checkpoint",
-        "interval-time": 600,
+        "interval-s": 600,
         "interval-mb": 100,
         "keep-last": 10,
-        "keep-time": 0,
-        "keep-redo": 0,
+        "keep-s": 0,
+        "keep-all": 0,
         "all": 0,
         "output-checkpoint": 1,
         "output-log-switch": 1
@@ -45,9 +45,9 @@
       "memory-min-mb": 64,
       "memory-max-mb": 1024,
       "read-buffer-max-mb": 256,
-      "redo-read-sleep": 10000,
-      "arch-read-sleep": 10000000,
-      "redo-verify-delay": 50000,
+      "redo-read-sleep-us": 10000,
+      "arch-read-sleep-us": 10000000,
+      "redo-verify-delay-us": 50000,
       "event-table": "SYSTEM.OPENLOGREPLICATOR",
       "tables": [
         {"table": "OWNER1.TABLENAME1", "key": "col1, col2, col3"},
@@ -67,8 +67,8 @@
         "max-message-mb": 500,
         "max-messages": 200000,
         "enable-idempotence": 0,
-        "poll-interval": 100000,
-        "checkpoint-interval": 10,
+        "poll-interval-us": 100000,
+        "checkpoint-interval-s": 10,
         "queue-size": 65536
       }
     }

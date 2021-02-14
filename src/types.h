@@ -77,9 +77,6 @@ typedef uint64_t typeunicode;
 #define WRITER_FILE                             2
 #define WRITER_SERVICE                          3
 
-#define SAVEPOINT_OFF                           0
-#define SAVEPOINT_FILES                         1
-
 #define ARCH_LOG_PATH                           0
 #define ARCH_LOG_ONLINE                         1
 #define ARCH_LOG_ONLINE_KEEP                    2
@@ -141,7 +138,7 @@ typedef uint64_t typeunicode;
 #define TRACE2_ARCHIVE_LIST                     0x0000800
 #define TRACE2_SCHEMA_LIST                      0x0001000
 #define TRACE2_KAFKA                            0x0002000
-#define TRACE2_SAVEPOINTS                       0x0004000
+#define TRACE2_CHECKPOINT                       0x0004000
 
 #define REDO_FLAGS_ARCH_ONLY                    0x0000001
 #define REDO_FLAGS_SCHEMALESS                   0x0000002
@@ -153,7 +150,6 @@ typedef uint64_t typeunicode;
 #define REDO_FLAGS_SHOW_CONSTRAINT_COLUMNS      0x0000080
 #define REDO_FLAGS_SHOW_INCOMPLETE_TRANSACTIONS 0x0000100
 #define REDO_FLAGS_FLUSH_QUEUE_ON_EXIT          0x0000200
-#define REDO_FLAGS_SAVEPOINTS_OFF               0x0000400
 
 #define DISABLE_CHECK_GRANTS                    0x0000001
 #define DISABLE_CHECK_SUPPLEMENTAL_LOG          0x0000002

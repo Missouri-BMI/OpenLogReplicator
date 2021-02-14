@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with OpenLogReplicator; see the file LICENSE;  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include <thread>
 #include <dirent.h>
+#include <thread>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -58,14 +58,16 @@ namespace OpenLogReplicator {
         logArchiveFormat("o1_mf_%t_%s_%h_.arc"),
         redoCopyPath(""),
         checkpointPath("checkpoint"),
-        checkpointIntervalTime(600),
+        checkpointIntervalS(600),
         checkpointIntervalMB(100),
         checkpointKeepLast(10),
-        checkpointKeepTime(0),
-        checkpointKeepRedo(0),
+        checkpointKeepS(0),
+        checkpointKeepAll(0),
         checkpointAll(0),
         checkpointOutputCheckpoint(1),
         checkpointOutputLogSwitch(1),
+        checkpointLastTime(0),
+        checkpointLastOffset(0),
         archReader(nullptr),
         waitingForWriter(false),
         context(""),
@@ -82,9 +84,9 @@ namespace OpenLogReplicator {
         dumpRawData(dumpRawData),
         flags(0),
         disableChecks(disableChecks),
-        redoReadSleep(10000),
-        archReadSleep(10000000),
-        redoVerifyDelay(50000),
+        redoReadSleepUS(10000),
+        archReadSleepUS(10000000),
+        redoVerifyDelayUS(50000),
         version(0),
         conId(0),
         resetlogs(0),
@@ -427,6 +429,7 @@ namespace OpenLogReplicator {
         if (scn == ZERO_SCN) {
             RUNTIME_FAIL("getting database SCN");
         }
+        readCheckpoints();
         initializeSchema();
     }
 
@@ -545,7 +548,7 @@ namespace OpenLogReplicator {
 
                                 //all so far read, waiting for switch
                                 if (redo == nullptr && !isHigher) {
-                                    usleep(redoReadSleep);
+                                    usleep(redoReadSleepUS);
                                 } else
                                     break;
 
@@ -579,9 +582,6 @@ namespace OpenLogReplicator {
                                 RUNTIME_FAIL("read online redo log");
                             }
                         }
-
-                        if (redo->nextScn != ZERO_SCN)
-                            writeSavepoint(redo->nextScn - 1);
                         ++sequence;
                     }
                 }
@@ -597,7 +597,7 @@ namespace OpenLogReplicator {
                 if (archiveRedoQueue.empty()) {
                     if ((flags & REDO_FLAGS_ARCH_ONLY) != 0) {
                         TRACE(TRACE2_ARCHIVE_LIST, "ARCHIVE LIST: archived redo log missing for seq: " << dec << sequence << ", sleeping");
-                        usleep(archReadSleep);
+                        usleep(archReadSleepUS);
                     } else {
                         RUNTIME_FAIL("couldn't find archive log for seq: " << dec << sequence);
                     }
@@ -648,8 +648,6 @@ namespace OpenLogReplicator {
                         RUNTIME_FAIL("archive log processing returned: " << dec << ret);
                     }
 
-                    if (redo->nextScn != ZERO_SCN)
-                        writeSavepoint(redo->nextScn - 1);
                     ++sequence;
                     archiveRedoQueue.pop();
                     delete redo;
@@ -663,7 +661,7 @@ namespace OpenLogReplicator {
                     break;
 
                 if (!logsProcessed)
-                    usleep(redoReadSleep);
+                    usleep(redoReadSleepUS);
             }
         } catch (ConfigurationException &ex) {
             stopMain();
@@ -969,17 +967,34 @@ namespace OpenLogReplicator {
         return path;
     }
 
-    void OracleAnalyzer::writeSavepoint(typeSCN savepointScn) {
-        if ((flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
-            return;
+    bool OracleAnalyzer::checkpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool switchRedo) {
+        TRACE(TRACE2_CHECKPOINT, "CHECKPOINT: on: " << dec << scn
+                << " time: " << dec << time_.getVal()
+                << " seq: " << sequence
+                << " offset: " << offset
+                << " switch: " << switchRedo
+                << " checkpointLastTime: " << checkpointLastTime.getVal()
+                << " checkpointLastOffset: " << checkpointLastOffset);
+        if (!checkpointAll &&
+                checkpointLastTime.getVal() >= 0 &&
+                !switchRedo &&
+                (offset - checkpointLastOffset < checkpointIntervalMB * 1024 * 1024 || checkpointIntervalMB == 0)) {
+            if (time_.getVal() - checkpointLastTime.getVal() >= checkpointIntervalS && checkpointIntervalS == 0) {
+                checkpointLastTime = time_;
+                return true;
+            }
 
-        TRACE(TRACE2_SAVEPOINTS, "SAVEPOINT: writing scn: " << dec << savepointScn);
-        string fileName = checkpointPath + "/" + database + "-" + to_string(savepointScn) + ".json";
+            return false;
+        }
+
+        TRACE(TRACE2_CHECKPOINT, "CHECKPOINT: writing scn: " << dec << scn << " time: " << time_.getVal() << " seq: " <<
+                sequence << " offset: " << offset << " switch: " << switchRedo);
+        string fileName = checkpointPath + "/" + database + "-chkpt-" + to_string(scn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);
 
         if (!outfile.is_open()) {
-            RUNTIME_FAIL("writing savepoint data to " << fileName);
+            RUNTIME_FAIL("writing checkpoint data to " << fileName);
         }
 
         typeSEQ minSequence = 0xFFFFFFFF;
@@ -1000,9 +1015,13 @@ namespace OpenLogReplicator {
 
         stringstream ss;
         ss << "{\"database\":\"" << database
-                << "\",\"scn\":" << dec << savepointScn
+                << "\",\"scn\":" << dec << scn
                 << ",\"resetlogs\":" << dec << resetlogs
-                << ",\"activation\":" << dec << activation;
+                << ",\"activation\":" << dec << activation
+                << ",\"time\":" << dec << time_.getVal()
+                << ",\"sequence\":" << dec << sequence
+                << ",\"offset\":" << dec << offset
+                << ",\switch\":" << dec << switchRedo;
 
         if (minSequence != 0xFFFFFFFF) {
             ss << ",\"min-tran\":{"
@@ -1015,6 +1034,76 @@ namespace OpenLogReplicator {
 
         outfile << ss.rdbuf();
         outfile.close();
+
+        checkpointLastTime = time_;
+        checkpointLastOffset = offset;
+
+/*
+        clean up old checkpoint files
+                -> checkpointKeepTime
+                -> checkpointKeepLast
+                -> checkpointKeepRedo
+*/
+
+        if (switchRedo) {
+            if (checkpointOutputLogSwitch)
+                return true;
+        } else {
+            if (checkpointOutputCheckpoint)
+                return true;
+        }
+
+        return false;
+    }
+
+    void OracleAnalyzer::readCheckpoints(void) {
+        TRACE(TRACE2_CHECKPOINT, "CHECKPOINT: searching for previous checkpoint information on: " << checkpointPath);
+        DIR *dir;
+        if ((dir = opendir(checkpointPath.c_str())) == nullptr) {
+            RUNTIME_FAIL("can't access directory: " << checkpointPath);
+        }
+
+        string newLastCheckedDay;
+        struct dirent *ent;
+        typeSCN fileScnMax = 0;
+        while ((ent = readdir(dir)) != nullptr) {
+            if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+                continue;
+
+            struct stat fileStat;
+            string fileName = ent->d_name;
+            TRACE(TRACE2_CHECKPOINT, "CHECKPOINT: found file: " << checkpointPath << "/" << fileName);
+
+            string fullName = checkpointPath + "/" + ent->d_name;
+            if (stat(fullName.c_str(), &fileStat)) {
+                WARNING("can't read file information for: " << fullName);
+                continue;
+            }
+
+            if (S_ISDIR(fileStat.st_mode))
+                continue;
+
+            string prefix = database + "-chkpt-";
+            if (fileName.length() < prefix.length() || fileName.substr(0, prefix.length()).compare(prefix) != 0)
+                continue;
+
+            string suffix = ".json";
+            if (fileName.length() < suffix.length() || fileName.substr(fileName.length() - suffix.length(), fileName.length()).compare(suffix) != 0)
+                continue;
+
+            string fileScnStr = fileName.substr(prefix.length(), fileName.length() - suffix.length());
+            typeSCN fileScn;
+            try {
+                fileScn = strtoull(fileScnStr.c_str(), nullptr, 10);
+            } catch (exception &e) {
+                //ignore other files
+                continue;
+            }
+
+            TRACE(TRACE2_CHECKPOINT, "CHECKPOINT: found SCN: " << fileScn);
+            checkpointScnList.push_back(fileScn);
+        }
+        closedir(dir);
     }
 
     uint8_t *OracleAnalyzer::getMemoryChunk(const char *module, bool supp) {

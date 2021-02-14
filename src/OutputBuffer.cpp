@@ -1931,7 +1931,7 @@ namespace OpenLogReplicator {
         } else {
             if (object != nullptr) {
                 //assume null values for missing columns
-                for (uint16_t i: object->pk ) {
+                for (uint16_t i: object->pk) {
                     auto it = valuesMap.find(i);
                     if (it == valuesMap.end()) {
                         memset(&values[valuesMax][VALUE_BEFORE], 0, sizeof(struct ColumnValue));

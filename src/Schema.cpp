@@ -365,9 +365,6 @@ namespace OpenLogReplicator {
     }
 
     bool Schema::readSys(OracleAnalyzer *oracleAnalyzer) {
-        if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
-            return false;
-
         TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: searching for previous schema on: " << oracleAnalyzer->checkpointPath);
         DIR *dir;
         if ((dir = opendir(oracleAnalyzer->checkpointPath.c_str())) == nullptr) {
@@ -383,7 +380,7 @@ namespace OpenLogReplicator {
 
             struct stat fileStat;
             string fileName = ent->d_name;
-            TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: found previous schema: " << oracleAnalyzer->checkpointPath << "/" << fileName );
+            TRACE(TRACE2_SCHEMA_LIST, "SCHEMA LIST: found previous schema: " << oracleAnalyzer->checkpointPath << "/" << fileName);
 
             string fullName = oracleAnalyzer->checkpointPath + "/" + ent->d_name;
             if (stat(fullName.c_str(), &fileStat)) {
@@ -851,9 +848,6 @@ namespace OpenLogReplicator {
     }
 
     void Schema::writeSys(OracleAnalyzer *oracleAnalyzer) {
-        if ((oracleAnalyzer->flags & REDO_FLAGS_SAVEPOINTS_OFF) != 0)
-            return;
-
         string fileName = oracleAnalyzer->checkpointPath + "/" + oracleAnalyzer->database + "-schema-" + to_string(oracleAnalyzer->schemaScn) + ".json";
         ofstream outfile;
         outfile.open(fileName.c_str(), ios::out | ios::trunc);

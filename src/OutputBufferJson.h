@@ -51,15 +51,14 @@ namespace OpenLogReplicator {
                 uint64_t unknownFormat, uint64_t schemaFormat, uint64_t columnFormat, uint64_t unknownType);
         virtual ~OutputBufferJson();
 
-        virtual void processBegin(typeSCN scn, typetime timeVal, typeXID xid);
+        virtual void processBegin(typeSCN scn, typetime time_, typeXID xid);
         virtual void processCommit(void);
         virtual void processInsert(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
         virtual void processUpdate(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
         virtual void processDelete(OracleObject *object, typeDATAOBJ dataObj, typeDBA bdba, typeSLOT slot, typeXID xid);
         virtual void processDDL(OracleObject *object, typeDATAOBJ dataObj, uint16_t type, uint16_t seq, const char *operation,
                 const char *sql, uint64_t sqlLength);
-        virtual void processCheckpoint(typeSCN scn, typetime lwnTimestamp, typeSEQ sequence, uint64_t offset);
-        virtual void processSwitch(typeSCN scn, typetime timeVal, typeSEQ sequence);
+        virtual void processCheckpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool redo);
     };
 }
 

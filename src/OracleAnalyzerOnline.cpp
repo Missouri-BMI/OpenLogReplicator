@@ -574,7 +574,7 @@ namespace OpenLogReplicator {
     OracleAnalyzerOnline::OracleAnalyzerOnline(OutputBuffer *outputBuffer, uint64_t dumpRedoLog, uint64_t dumpRawData,
             const char *alias, const char *database, uint64_t memoryMinMb, uint64_t memoryMaxMb, uint64_t readBufferMax,
             uint64_t disableChecks, const char *user, const char *password, const char *connectString, bool isStandby) :
-        OracleAnalyzer(outputBuffer, dumpRedoLog, dumpRawData, alias, database, disableChecks, memoryMinMb, memoryMaxMb, readBufferMax),
+        OracleAnalyzer(outputBuffer, dumpRedoLog, dumpRawData, alias, database, memoryMinMb, memoryMaxMb, readBufferMax, disableChecks),
         isStandby(isStandby),
         user(user),
         password(password),
@@ -863,10 +863,9 @@ namespace OpenLogReplicator {
     }
 
     void OracleAnalyzerOnline::checkConnection(void) {
+        INFO("connecting to Oracle instance of " << database << " to " << connectString);
         while (!shutdown) {
             if (conn == nullptr) {
-                INFO("connecting to Oracle instance of " << database << " to " << connectString);
-
                 try {
                     conn = new DatabaseConnection(env, user, password, connectString, false);
                 } catch (RuntimeException &ex) {

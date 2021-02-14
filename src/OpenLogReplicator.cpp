@@ -573,7 +573,7 @@ int main(int argc, char **argv) {
 
                     while (keyStream.good()) {
                         string keyCol, keyCol2;
-                        getline(keyStream, keyCol, ',' );
+                        getline(keyStream, keyCol, ',');
                         keyCol.erase(remove(keyCol.begin(), keyCol.end(), ' '), keyCol.end());
                         transform(keyCol.begin(), keyCol.end(),keyCol.begin(), ::toupper);
                         element->keys.push_back(keyCol);
@@ -589,21 +589,21 @@ int main(int argc, char **argv) {
             }
 
             //optional
-            if (sourceJSON.HasMember("redo-verify-delay")) {
-                const Value& redoVerifyDelayJSON = sourceJSON["redo-verify-delay"];
-                oracleAnalyzer->redoVerifyDelay = redoVerifyDelayJSON.GetUint64();
+            if (sourceJSON.HasMember("redo-verify-delay-us")) {
+                const Value& redoVerifyDelayUSJSON = sourceJSON["redo-verify-delay-us"];
+                oracleAnalyzer->redoVerifyDelayUS = redoVerifyDelayUSJSON.GetUint64();
             }
 
             //optional
-            if (sourceJSON.HasMember("arch-read-sleep")) {
-                const Value& archReadSleepJSON = sourceJSON["arch-read-sleep"];
-                oracleAnalyzer->archReadSleep = archReadSleepJSON.GetUint64();
+            if (sourceJSON.HasMember("arch-read-sleep-us")) {
+                const Value& archReadSleepUSJSON = sourceJSON["arch-read-sleep-us"];
+                oracleAnalyzer->archReadSleepUS = archReadSleepUSJSON.GetUint64();
             }
 
             //optional
-            if (sourceJSON.HasMember("redo-read-sleep")) {
-                const Value& redoReadSleepJSON = sourceJSON["redo-read-sleep"];
-                oracleAnalyzer->redoReadSleep = redoReadSleepJSON.GetUint64();
+            if (sourceJSON.HasMember("redo-read-sleep-us")) {
+                const Value& redoReadSleepUSJSON = sourceJSON["redo-read-sleep-us"];
+                oracleAnalyzer->redoReadSleepUS = redoReadSleepUSJSON.GetUint64();
             }
 
             //optional
@@ -627,9 +627,9 @@ int main(int argc, char **argv) {
                     oracleAnalyzer->checkpointPath = checkpointPathJSON.GetString();
                 }
 
-                if (checkpointJSON.HasMember("interval-time")) {
-                    const Value& checkpointIntervalTimeJSON = checkpointJSON["interval-time"];
-                    oracleAnalyzer->checkpointIntervalTime = checkpointIntervalTimeJSON.GetUint64();
+                if (checkpointJSON.HasMember("interval-s")) {
+                    const Value& checkpointIntervalSJSON = checkpointJSON["interval-s"];
+                    oracleAnalyzer->checkpointIntervalS = checkpointIntervalSJSON.GetUint64();
                 }
 
                 if (checkpointJSON.HasMember("interval-mb")) {
@@ -642,14 +642,14 @@ int main(int argc, char **argv) {
                     oracleAnalyzer->checkpointKeepLast = checkpointKeepLastJSON.GetUint64();
                 }
 
-                if (checkpointJSON.HasMember("keep-time")) {
-                    const Value& checkpointKeepTimeJSON = checkpointJSON["keep-time"];
-                    oracleAnalyzer->checkpointKeepTime = checkpointKeepTimeJSON.GetUint64();
+                if (checkpointJSON.HasMember("keep-s")) {
+                    const Value& checkpointKeepSJSON = checkpointJSON["keep-s"];
+                    oracleAnalyzer->checkpointKeepS = checkpointKeepSJSON.GetUint64();
                 }
 
-                if (checkpointJSON.HasMember("keep-redo")) {
-                    const Value& checkpointKeepRedoJSON = checkpointJSON["keep-redo"];
-                    oracleAnalyzer->checkpointKeepRedo = checkpointKeepRedoJSON.GetUint64();
+                if (checkpointJSON.HasMember("keep-all")) {
+                    const Value& checkpointKeepAllJSON = checkpointJSON["keep-all"];
+                    oracleAnalyzer->checkpointKeepAll = checkpointKeepAllJSON.GetUint64();
                 }
 
                 if (checkpointJSON.HasMember("all")) {
@@ -700,12 +700,12 @@ int main(int argc, char **argv) {
             const Value& writerTypeJSON = getJSONfieldV(configFileName, writerJSON, "type");
 
             //optional
-            uint64_t pollInterval = 100000;
-            if (writerJSON.HasMember("poll-interval")) {
-                const Value& pollIntervalJSON = writerJSON["poll-interval"];
-                pollInterval = pollIntervalJSON.GetUint64();
-                if (pollInterval < 100 || pollInterval > 3600000000) {
-                    CONFIG_FAIL("bad JSON, invalid \"poll-interval\" value: " << pollIntervalJSON.GetString() << ", expected from 100 to 3600000000");
+            uint64_t pollIntervalUS = 100000;
+            if (writerJSON.HasMember("poll-interval-us")) {
+                const Value& pollIntervalUSJSON = writerJSON["poll-interval-us"];
+                pollIntervalUS = pollIntervalUSJSON.GetUint64();
+                if (pollIntervalUS < 100 || pollIntervalUS > 3600000000) {
+                    CONFIG_FAIL("bad JSON, invalid \"poll-interval-us\" value: " << pollIntervalUSJSON.GetString() << ", expected from 100 to 3600000000");
                 }
             }
 
@@ -756,10 +756,10 @@ int main(int argc, char **argv) {
             }
 
             //optional
-            uint64_t checkpointInterval = 10;
-            if (writerJSON.HasMember("checkpoint-interval")) {
-                const Value& checkpointIntervalJSON = writerJSON["checkpoint-interval"];
-                checkpointInterval = checkpointIntervalJSON.GetUint64();
+            uint64_t checkpointIntervalS = 10;
+            if (writerJSON.HasMember("checkpoint-interval-s")) {
+                const Value& checkpointIntervalSJSON = writerJSON["checkpoint-interval-s"];
+                checkpointIntervalS = checkpointIntervalSJSON.GetUint64();
             }
 
             //optional
@@ -779,7 +779,7 @@ int main(int argc, char **argv) {
                     name = nameJSON.GetString();
                 }
 
-                writer = new WriterFile(aliasJSON.GetString(), oracleAnalyzer, name, pollInterval, checkpointInterval, queueSize,
+                writer = new WriterFile(aliasJSON.GetString(), oracleAnalyzer, name, pollIntervalUS, checkpointIntervalS, queueSize,
                         startScn, startSequence, startTime, startTimeRel);
                 if (writer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(WriterFile) << " bytes memory (for: file writer)");
@@ -820,7 +820,7 @@ int main(int argc, char **argv) {
                 const Value& topicJSON = getJSONfieldV(configFileName, writerJSON, "topic");
 
                 writer = new WriterKafka(aliasJSON.GetString(), oracleAnalyzer, brokersJSON.GetString(),
-                        topicJSON.GetString(), maxMessageMb, maxMessages, pollInterval, checkpointInterval, queueSize,
+                        topicJSON.GetString(), maxMessageMb, maxMessages, pollIntervalUS, checkpointIntervalS, queueSize,
                         startScn, startSequence, startTime, startTimeRel, enableIdempocence);
                 if (writer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(WriterKafka) << " bytes memory (for: Kafka writer)");
@@ -832,12 +832,12 @@ int main(int argc, char **argv) {
 #if defined(LINK_LIBRARY_PROTOBUF) && defined(LINK_LIBRARY_ZEROMQ)
                 const Value& uriJSON = getJSONfieldV(configFileName, writerJSON, "uri");
 
-                StreamZeroMQ *stream = new StreamZeroMQ(uriJSON.GetString(), pollInterval);
+                StreamZeroMQ *stream = new StreamZeroMQ(uriJSON.GetString(), pollIntervalUS);
                 if (stream == nullptr) {
                     RUNTIME_FAIL("network stream creation failed");
                 }
 
-                writer = new WriterStream(aliasJSON.GetString(), oracleAnalyzer, pollInterval, checkpointInterval,
+                writer = new WriterStream(aliasJSON.GetString(), oracleAnalyzer, pollIntervalUS, checkpointIntervalS,
                         queueSize, startScn, startSequence, startTime, startTimeRel, stream);
                 if (writer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(WriterStream) << " bytes memory (for: ZeroMQ writer)");
@@ -849,12 +849,12 @@ int main(int argc, char **argv) {
 #ifdef LINK_LIBRARY_PROTOBUF
                 const Value& uriJSON = getJSONfieldV(configFileName, writerJSON, "uri");
 
-                StreamNetwork *stream = new StreamNetwork(uriJSON.GetString(), pollInterval);
+                StreamNetwork *stream = new StreamNetwork(uriJSON.GetString(), pollIntervalUS);
                 if (stream == nullptr) {
                     RUNTIME_FAIL("network stream creation failed");
                 }
 
-                writer = new WriterStream(aliasJSON.GetString(), oracleAnalyzer, pollInterval, checkpointInterval,
+                writer = new WriterStream(aliasJSON.GetString(), oracleAnalyzer, pollIntervalUS, checkpointIntervalS,
                         queueSize, startScn, startSequence, startTime, startTimeRel, stream);
                 if (writer == nullptr) {
                     RUNTIME_FAIL("couldn't allocate " << dec << sizeof(WriterStream) << " bytes memory (for: ZeroMQ writer)");

@@ -89,14 +89,16 @@ namespace OpenLogReplicator {
         string logArchiveDest;
         string redoCopyPath;
         string checkpointPath;
-        uint64_t checkpointIntervalTime;
+        uint64_t checkpointIntervalS;
         uint64_t checkpointIntervalMB;
         uint64_t checkpointKeepLast;
-        uint64_t checkpointKeepTime;
-        uint64_t checkpointKeepRedo;
+        uint64_t checkpointKeepS;
+        uint64_t checkpointKeepAll;
         uint64_t checkpointAll;
         uint64_t checkpointOutputCheckpoint;
         uint64_t checkpointOutputLogSwitch;
+        typetime checkpointLastTime;
+        uint64_t checkpointLastOffset;
 
         Reader *archReader;
         set<Reader*> readers;
@@ -127,9 +129,10 @@ namespace OpenLogReplicator {
         uint64_t disableChecks;
         vector<string> pathMapping;
         vector<string> redoLogsBatch;
-        uint64_t redoReadSleep;
-        uint64_t archReadSleep;
-        uint64_t redoVerifyDelay;
+        vector<typeSCN> checkpointScnList;
+        uint64_t redoReadSleepUS;
+        uint64_t archReadSleepUS;
+        uint64_t redoVerifyDelayUS;
         uint64_t version;                   //compatibility level of redo logs
         typeconid conId;
         string conName;
@@ -191,7 +194,8 @@ namespace OpenLogReplicator {
         static void archGetLogPath(OracleAnalyzer *oracleAnalyzer);
         static void archGetLogList(OracleAnalyzer *oracleAnalyzer);
         string applyMapping(string path);
-        void writeSavepoint(typeSCN savepointScn);
+        bool checkpoint(typeSCN scn, typetime time_, typeSEQ sequence, uint64_t offset, bool switchRedo);
+        void readCheckpoints(void);
 
         void skipEmptyFields(RedoLogRecord *redoLogRecord, uint64_t &fieldNum, uint64_t &fieldPos, uint16_t &fieldLength);
         void nextField(RedoLogRecord *redoLogRecord, uint64_t &fieldNum, uint64_t &fieldPos, uint16_t &fieldLength);
